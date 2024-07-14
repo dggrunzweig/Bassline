@@ -8,6 +8,7 @@ interface props {
   XDragSecondary: (x: number, step_index: number) => void;
   YDragSecondary: (y: number, step_index: number) => void;
   step_index: number;
+  selected_index: number;
 }
 
 const clamp = (x: number, min_x: number, max_x: number) => {
@@ -21,16 +22,21 @@ const TwoDButton = (props: props) => {
   const [click_started, setClickStarted] = useState(false);
 
   let button_outline = "border-slate-200";
-  if (toggled) {
+  if (props.step_index == props.selected_index)
     button_outline =
-      "border-red-500 shadow-red-500 shadow-[0_0_15px_0px_rgba(0,0,0,0.3)]";
+      "border-red-500 shadow-ered-500 shadow-[0_0_15px_0px_rgba(0,0,0,0.3)]";
+
+  let button_bg = " bg-transparent";
+  if (toggled) {
+    button_bg = " bg-amber-500/70";
   }
   const toggle_button = (
     <>
       <div
         className={
-          "w-full border-2 bg-transparent h-auto aspect-square rounded-3xl " +
-          button_outline
+          "w-full border-2 h-auto aspect-square rounded-lg " +
+          button_outline +
+          button_bg
         }
         // onClick={() => {}}
         onMouseDown={() => {
@@ -73,7 +79,7 @@ const TwoDButton = (props: props) => {
             props.YDragPrimary(1 - y, props.step_index);
           }}
         >
-          <div className="w-1/12 h-auto aspect-square rounded-full bg-orange-500"></div>
+          <div className="w-1/12 h-auto aspect-square rounded-full bg-indigo-400 border border-slate-100"></div>
         </Draggable>
         <Draggable
           onDrag={(e: DraggableEvent, data: DraggableData) => {
@@ -85,7 +91,7 @@ const TwoDButton = (props: props) => {
             props.YDragSecondary(1 - y, props.step_index);
           }}
         >
-          <div className="w-1/12 h-auto aspect-square rounded-full bg-blue-500"></div>
+          <div className="w-1/12 h-auto aspect-square rounded-full bg-red-500  border border-slate-100"></div>
         </Draggable>
       </div>
     </>

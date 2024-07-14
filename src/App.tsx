@@ -110,6 +110,7 @@ const App = () => {
                   XDragSecondary={xDragSecondary}
                   YDragSecondary={yDragSecondary}
                   step_index={i}
+                  selected_index={current_step}
                 />
               );
             })}
