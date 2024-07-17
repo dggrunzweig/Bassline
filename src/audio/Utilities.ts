@@ -122,7 +122,7 @@ export function createDigitalDelay(
     DigitalDelay {
       const input = createGain(ctx, 1.0);
       const out = createGain(ctx, 1.0);
-      const delay = ctx.createDelay(Math.max(1.0, delay_time));
+      const delay = ctx.createDelay(Math.max(3.0, delay_time));
       delay.delayTime.value = delay_time;
       const fb = createGain(ctx, db2mag(feedback_db));
       input.connect(delay);
