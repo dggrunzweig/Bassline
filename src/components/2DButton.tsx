@@ -77,6 +77,10 @@ const TwoDButton = (props: props) => {
           is_dragging.current = false;
           setClickStarted(false);
         }}
+        onMouseLeave={() => {
+          is_dragging.current = false;
+          setClickStarted(false);
+        }}
         onMouseMove={(e) => {
           if (click_started) {
             is_dragging.current = true;

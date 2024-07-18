@@ -33,6 +33,9 @@ const Knob = ({
       onMouseUp={() => {
         setMouseClicked(false);
       }}
+      onMouseLeave={() => {
+        setMouseClicked(false);
+      }}
       onMouseMove={(e) => {
         if (mouse_clicked) {
           const bounds = e.currentTarget.getBoundingClientRect();
