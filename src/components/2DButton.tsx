@@ -46,13 +46,16 @@ const TwoDButton = (props: props) => {
     props.step_index % 4 == 0 ? "border-slate-100/80" : "border-slate-400/80";
 
   if (toggled) {
-    button_bg = " bg-slate-50/60";
+    button_bg = " bg-slate-50/30";
     button_outline = "bg-slate-50/60";
   }
 
   if (props.step_index == props.selected_index)
     button_outline =
       "border-orange-500 shadow-orange-300 shadow-[0_0_30px_0px_rgba(0,0,0,0.3)]";
+
+  let secondary_color = "bg-orange-400/70";
+  let primary_color = "bg-indigo-400/50";
 
   const toggle_button = (
     <>
@@ -84,23 +87,32 @@ const TwoDButton = (props: props) => {
             if (primary) {
               props.XDragPrimary(x / bounds.width, props.step_index);
               props.YDragPrimary(1 - y / bounds.height, props.step_index);
-              setXP(x);
-              setYP(y);
+              setXP(clamp(x, 10, bounds.width - 10));
+              setYP(clamp(y, 10, bounds.height - 10));
             } else {
               props.XDragSecondary(x / bounds.width, props.step_index);
               props.YDragSecondary(1 - y / bounds.height, props.step_index);
-              setXS(x);
-              setYS(y);
+              setXS(clamp(x, 10, bounds.width - 10));
+              setYS(clamp(y, 10, bounds.height - 10));
             }
           }
         }}
       >
         {toggled && (
+          <img
+            src="./src/assets/button_grid.svg"
+            className="object-fill w-full h-full select-none"
+          />
+        )}
+        {toggled && (
           <div
             style={{
               transform: `translate(${x}px, ${y}px)`,
             }}
-            className="absolute -m-2 w-4 h-auto aspect-square rounded-full bg-indigo-400/80"
+            className={
+              "absolute -m-3 w-4 h-auto aspect-square rounded-full border border-slate-50 " +
+              primary_color
+            }
           ></div>
         )}
         {toggled && (
@@ -108,7 +120,10 @@ const TwoDButton = (props: props) => {
             style={{
               transform: `translate(${x_s}px, ${y_s}px)`,
             }}
-            className="absolute -m-2 w-4 h-auto aspect-square rounded-full bg-orange-400/70"
+            className={
+              "absolute -m-2 w-4 h-auto aspect-square rounded-full border border-slate-50 " +
+              secondary_color
+            }
           ></div>
         )}
       </div>
