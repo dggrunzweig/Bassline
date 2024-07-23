@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import BackgroundDiv from "./components/BackgroundDiv";
 import TwoDButton from "./components/2DButton";
 import Knob from "./components/Knob";
@@ -8,6 +8,7 @@ import { AudioMain } from "./audio/AudioMain";
 import Visualizer from "./components/Visualizer";
 
 const App = () => {
+  // prevent use on mobile platforms
   if (isMobile) {
     return (
       <div>
@@ -19,6 +20,25 @@ const App = () => {
       </div>
     );
   }
+
+  // track window width to prevent window from becoming too small
+  const [validDimensions, setValidDimensions] = useState(true);
+  useEffect(() => {
+    const window_resize = () => {
+      if (window.innerWidth < 1200) {
+        setValidDimensions(false);
+      } else {
+        setValidDimensions(true);
+        console.log("Valid");
+      }
+    };
+    window.addEventListener("resize", window_resize);
+    return () => {
+      window.removeEventListener("resize", window_resize);
+    };
+  });
+
+  // states
   const num_steps = 8;
   const BPM = useRef(120);
 
@@ -97,6 +117,18 @@ const App = () => {
   };
 
   // The app itself
+  if (!validDimensions) {
+    return (
+      <div>
+        <BackgroundDiv>
+          <p className="flex flex-col w-full items-center justify-center h-screen text-center font-mono text-xl text-slate-50 text-wrap">
+            Window is too narrow!!!
+          </p>
+        </BackgroundDiv>
+      </div>
+    );
+  }
+
   return (
     <>
       <BackgroundDiv>
@@ -221,10 +253,11 @@ const App = () => {
                       YDragSecondary={yDragSecondary}
                       step_index={i}
                       selected_index={current_step}
-                      x_p_init={decay_init}
-                      y_p_init={vel_init}
-                      x_s_init={tone_init}
-                      y_s_init={pb_init}
+                      x_p_init={decay.current[i]}
+                      y_p_init={velocity.current[i]}
+                      x_s_init={tone.current[i]}
+                      y_s_init={pitch_bend.current[i]}
+                      toggle_init={steps.current[i] == 1}
                     />
                   </div>
                 );
