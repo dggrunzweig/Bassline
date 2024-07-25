@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ColorPalette } from "./Colors";
 
 interface props {
   name: string;
@@ -7,6 +8,7 @@ interface props {
   init_value: number;
   min_value: number;
   max_value: number;
+  palette: number;
 }
 
 const Knob = ({
@@ -16,6 +18,7 @@ const Knob = ({
   min_value,
   max_value,
   onChange,
+  palette,
 }: props) => {
   const [current_val, setValue] = useState(init_value);
 
@@ -54,16 +57,34 @@ const Knob = ({
         }
       }}
     >
-      <div className="w-auto h-auto bg-transparent font-mono text-slate-50 text-xl select-none py-1 text-nowrap">
+      <div
+        className={
+          "w-auto h-auto bg-transparent font-mono text-xl select-none py-1 text-nowrap" +
+          ColorPalette(palette).text_1
+        }
+      >
         {name}
       </div>
       <div
-        className="flex flex-col aspect-square h-1/2 items-center bg-transparent text-slate-50 text-xl border border-slate-50 rounded-full cursor-grab"
+        className={
+          "flex flex-col aspect-square h-1/2 items-center bg-transparent text-xl border rounded-full cursor-grab" +
+          ColorPalette(palette).knob_border
+        }
         style={{ transform: r_tag }}
       >
-        <div className="aspect-square rounded-full h-1/6 bg-slate-50 mt-1 "></div>
+        <div
+          className={
+            "aspect-square rounded-full h-1/6 mt-1 " +
+            ColorPalette(palette).knob_dot
+          }
+        ></div>
       </div>
-      <div className="w-auto h-auto bg-transparent  font-mono py-1 text-slate-50 text-xl select-none">
+      <div
+        className={
+          "w-auto h-auto bg-transparent  font-mono py-1  text-xl select-none" +
+          ColorPalette(palette).text_1
+        }
+      >
         {current_val + units}
       </div>
     </div>

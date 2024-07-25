@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-
+import { ColorPalette } from "./Colors";
 interface props {
   Toggle: (on: boolean, step_index: number) => void;
   XDragPrimary: (x: number, step_index: number) => void;
@@ -13,6 +13,7 @@ interface props {
   x_s_init: number;
   y_s_init: number;
   toggle_init: boolean;
+  palette: number;
 }
 
 const clamp = (x: number, min_x: number, max_x: number) => {
@@ -67,19 +68,22 @@ const TwoDButton = (props: props) => {
 
   let button_bg = " bg-transparent";
   let button_outline =
-    props.step_index % 4 == 0 ? "border-slate-100/80" : "border-slate-400/80";
+    props.step_index % 4 == 0
+      ? ColorPalette(props.palette).border_button_accent
+      : ColorPalette(props.palette).border_button_standard;
 
   if (toggled) {
-    button_bg = " bg-slate-50/30";
-    button_outline = "bg-slate-50/60";
+    button_bg = ColorPalette(props.palette).button_bg;
+    button_outline = ColorPalette(props.palette).border_button_active;
   }
 
   if (props.step_index == props.selected_index)
     button_outline =
-      "border-orange-500 shadow-orange-300 shadow-[0_0_30px_0px_rgba(0,0,0,0.3)]";
+      ColorPalette(props.palette).border_button_step +
+      "shadow-[0_0_30px_0px_rgba(0,0,0,0.3)]";
 
-  let secondary_color = "bg-orange-400/70";
-  let primary_color = "bg-indigo-400/50";
+  let primary_color = ColorPalette(props.palette).dot_1_bg;
+  let secondary_color = ColorPalette(props.palette).dot_2_bg;
 
   const primary_pos = ConvertXYToPos(x, y, dimensions.w, dimensions.h);
   const secondary_pos = ConvertXYToPos(x_s, y_s, dimensions.w, dimensions.h);
@@ -143,7 +147,8 @@ const TwoDButton = (props: props) => {
               transform: `translate(${primary_pos[0]}px, ${primary_pos[1]}px)`,
             }}
             className={
-              "absolute -m-3 w-4 h-auto aspect-square rounded-full border border-slate-50 " +
+              "absolute -m-3 w-4 h-auto aspect-square rounded-full border " +
+              ColorPalette(props.palette).dot_border +
               primary_color
             }
           ></div>
@@ -154,7 +159,8 @@ const TwoDButton = (props: props) => {
               transform: `translate(${secondary_pos[0]}px, ${secondary_pos[1]}px)`,
             }}
             className={
-              "absolute -m-2 w-4 h-auto aspect-square rounded-full border border-slate-50 " +
+              "absolute -m-2 w-4 h-auto aspect-square rounded-full border" +
+              ColorPalette(props.palette).dot_border +
               secondary_color
             }
           ></div>

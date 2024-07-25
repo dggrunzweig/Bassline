@@ -1,3 +1,4 @@
+import RecorderNode from './RecorderNode';
 import {BPMToTime, createAudioContext, createBiquadFilter, createCompressor, createDigitalDelay, createGain, createOscillator, db2mag, DigitalDelay, NoteToPitch} from './Utilities';
 
 export class AudioMain {
@@ -20,6 +21,11 @@ export class AudioMain {
   private delay: DigitalDelay;
   private hp: BiquadFilterNode;
   private analyzer: AnalyserNode;
+  private should_record = false;
+  private recording = false;
+  private record_steps = 0;
+  private recording_node: RecorderNode;
+  private setRecording: Function;
   constructor(num_steps: number, bpm: number, updateStep: Function) {
     this.ctx = createAudioContext();
     this.comp = createCompressor(this.ctx, -12, 4, 4, 0.03, 0.1);
@@ -40,7 +46,7 @@ export class AudioMain {
     this.ring_mod_osc.connect(this.ring_mod_level)
         .connect(this.ring_mod_gain.gain);
 
-
+    this.recording_node = new RecorderNode(this.ctx, this.comp);
 
     this.total_steps = num_steps;
     this.bpm = bpm;
@@ -64,7 +70,7 @@ export class AudioMain {
     const osc = createOscillator(
         ctx, 'sine', root_hz + 640 * pitch_bend * pitch_bend, 0);
     osc.frequency.setTargetAtTime(80, at_time, 0.4 * decay);
-    const fm_osc = createOscillator(ctx, 'square', root_hz * 1.2, 0);
+    const fm_osc = createOscillator(ctx, 'sine', root_hz * 1.4, 0);
     const fm_gain = createGain(ctx, tone * 200);
     fm_osc.connect(fm_gain).connect(osc.frequency);
     fm_osc.start(at_time);
@@ -145,6 +151,33 @@ export class AudioMain {
             this.decay[this.current_step], this.pitch_bend[this.current_step],
             this.tone[this.current_step]);
       }
+      // fired once when the recording is requested
+      if (this.should_record && this.current_step == 0 && !this.recording) {
+        this.recording = true;
+        this.recording_node.StartRecording();
+        console.log('Start Recording');
+      }
+      if (this.recording) {
+        if (this.record_steps <= 0) {
+          // stop recording
+          this.recording = false;
+          this.should_record = false;
+          this.recording_node.StopRecording();
+          console.log('Stop Recording');
+          setTimeout(() => {
+            if (this.recording_node.GetBlobURL() != null) {
+              const link = document.createElement('a');
+              link.href = this.recording_node.GetBlobURL();
+              link.download = 'bassline.webm';
+              link.innerHTML = '';
+              link.click();
+              console.log('Downloading Recording');
+              this.setRecording(false);
+            }
+          }, 2000);
+        }
+        this.record_steps--;
+      }
       this.updateStepUI(this.current_step);
       this.current_step = (this.current_step + 1) % this.total_steps;
       this.step();
@@ -164,5 +197,12 @@ export class AudioMain {
 
   public isRunning() {
     return this.running;
+  }
+
+  public RecordAudio(duration_steps: number, setRecording: Function) {
+    this.should_record = true;
+    this.record_steps = duration_steps;
+    this.setRecording = setRecording;
+    setRecording(true);
   }
 }

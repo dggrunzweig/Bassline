@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { ColorPalette } from "./Colors";
 
 interface props {
   analyzer: AnalyserNode;
@@ -50,7 +51,10 @@ const Visualizer = ({ analyzer }: props) => {
     <div className="flex flex-col items-center">
       <canvas
         ref={ref}
-        className="w-3/4 aspect-square rounded-xl bg-transparent border border-slate-50"
+        className={
+          "w-3/4 aspect-square rounded-xl bg-transparent border" +
+          ColorPalette(0).knob_border
+        }
       />
     </div>
   );
