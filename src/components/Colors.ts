@@ -19,7 +19,7 @@ const ColorPaletteOpenSky = {
   border_button_step: ' border-orange-500 shadow-orange-300 ',
   button_bg: ' bg-slate-50/30 ',
   dot_1_bg: ' bg-indigo-400/50 ',
-  dot_2_bg: ' bg-orange-400/70 ',
+  dot_2_bg: ' bg-slate-100/70 ',
   dot_border: ' border-slate-50 ',
   knob_border: ' border-slate-50 ',
   knob_dot: ' bg-slate-50 ',

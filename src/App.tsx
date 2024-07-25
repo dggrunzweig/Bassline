@@ -8,7 +8,7 @@ import { ColorPalette } from "./components/Colors";
 
 import { AudioMain } from "./audio/AudioMain";
 import Visualizer from "./components/Visualizer";
-import { Preset1 } from "./Presets";
+import { SequencerPreset1 } from "./Presets";
 
 const App = () => {
   // prevent use on mobile platforms
@@ -66,34 +66,34 @@ const App = () => {
   const vel_init = 0.9;
   const velocity = useRef(new Array<number>(num_steps).fill(vel_init));
   if (use_preset) {
-    velocity.current = Preset1.Volume;
+    velocity.current = SequencerPreset1.Volume;
   }
   audio_main.current.setVelocity(velocity.current);
 
   const decay_init = 0.2;
   const decay = useRef(new Array<number>(num_steps).fill(decay_init));
   if (use_preset) {
-    decay.current = Preset1.Decay;
+    decay.current = SequencerPreset1.Decay;
   }
   audio_main.current.setDecay(decay.current);
 
   const pb_init = 0.2;
   const pitch_bend = useRef(new Array<number>(num_steps).fill(pb_init));
   if (use_preset) {
-    pitch_bend.current = Preset1.PitchBend;
+    pitch_bend.current = SequencerPreset1.PitchBend;
   }
   audio_main.current.setPitchBend(pitch_bend.current);
 
   const tone_init = 0.1;
   const tone = useRef(new Array<number>(num_steps).fill(tone_init));
   if (use_preset) {
-    tone.current = Preset1.Tone;
+    tone.current = SequencerPreset1.Tone;
   }
   audio_main.current.setTone(tone.current);
 
   const steps = useRef(new Array<number>(num_steps).fill(0));
   if (use_preset) {
-    steps.current = Preset1.Steps;
+    steps.current = SequencerPreset1.Steps;
   }
   audio_main.current.SetSteps(steps.current);
 
