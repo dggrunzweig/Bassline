@@ -47,7 +47,7 @@ export class AudioMain {
         .connect(this.ring_mod_gain.gain);
 
     this.recording_node = new RecorderNode(this.ctx, this.comp);
-
+    this.setRecording = () => {};
     this.total_steps = num_steps;
     this.bpm = bpm;
 
@@ -167,11 +167,14 @@ export class AudioMain {
           setTimeout(() => {
             if (this.recording_node.GetBlobURL() != null) {
               const link = document.createElement('a');
-              link.href = this.recording_node.GetBlobURL();
-              link.download = 'bassline.webm';
-              link.innerHTML = '';
-              link.click();
-              console.log('Downloading Recording');
+              const blob = this.recording_node.GetBlobURL();
+              if (blob) {
+                link.href = blob;
+                link.download = 'bassline.webm';
+                link.innerHTML = '';
+                link.click();
+                console.log('Downloading Recording');
+              }
               this.setRecording(false);
             }
           }, 2000);
