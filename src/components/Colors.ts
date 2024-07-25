@@ -11,8 +11,8 @@ export interface Palette {
 const ColorPaletteOpenSky = {
   text_header: ' text-slate-50 ',
   text_1: ' text-slate-50 ',
-  text_2: ' text-slate-500 ',
-  link: ' text-indigo-300 ',
+  text_2: ' text-slate-100 ',
+  link: ' text-indigo-700 ',
   border_button_accent: ' border-slate-100/80 ',
   border_button_standard: ' border-slate-400/80 ',
   border_button_active: ' border-slate-50/60 ',
@@ -22,8 +22,8 @@ const ColorPaletteOpenSky = {
   dot_2_bg: ' bg-slate-100/70 ',
   dot_border: ' border-slate-50 ',
   knob_border: ' border-slate-50 ',
-  knob_dot: ' bg-slate-50 ',
-  gradient_1: ' from-indigo-50 ',
+  knob_dot: ' bg-orange-500 ',
+  gradient_1: ' from-indigo-300 ',
   gradient_2: ' via-indigo-300 ',
   gradient_3: ' to-blue-950 '
 }

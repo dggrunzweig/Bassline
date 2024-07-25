@@ -9,6 +9,7 @@ import { ColorPalette } from "./components/Colors";
 import { AudioMain } from "./audio/AudioMain";
 import Visualizer from "./components/Visualizer";
 import { SequencerPreset1 } from "./Presets";
+import InstructionOverlay from "./components/InstructionOverlay";
 
 const App = () => {
   // prevent use on mobile platforms
@@ -55,6 +56,8 @@ const App = () => {
 
   const [running, setRunning] = useState(false);
   const [recording, setRecording] = useState(false);
+  const [octave, setOctave] = useState(1);
+  const [view_instructions, setViewInstructions] = useState(true);
 
   const audio_main = useRef(
     new AudioMain(num_steps, BPM.current, setCurrentStep)
@@ -63,38 +66,40 @@ const App = () => {
   const [use_preset, setPreset] = useState(true);
 
   // per step parameters
+  audio_main.current.setOctave(octave);
+
   const vel_init = 0.9;
   const velocity = useRef(new Array<number>(num_steps).fill(vel_init));
   if (use_preset) {
     velocity.current = SequencerPreset1.Volume;
-  }
+  } else velocity.current = new Array<number>(num_steps).fill(vel_init);
   audio_main.current.setVelocity(velocity.current);
 
   const decay_init = 0.2;
   const decay = useRef(new Array<number>(num_steps).fill(decay_init));
   if (use_preset) {
     decay.current = SequencerPreset1.Decay;
-  }
+  } else decay.current = new Array<number>(num_steps).fill(decay_init);
   audio_main.current.setDecay(decay.current);
 
   const pb_init = 0.2;
   const pitch_bend = useRef(new Array<number>(num_steps).fill(pb_init));
   if (use_preset) {
     pitch_bend.current = SequencerPreset1.PitchBend;
-  }
+  } else pitch_bend.current = new Array<number>(num_steps).fill(pb_init);
   audio_main.current.setPitchBend(pitch_bend.current);
 
   const tone_init = 0.1;
   const tone = useRef(new Array<number>(num_steps).fill(tone_init));
   if (use_preset) {
     tone.current = SequencerPreset1.Tone;
-  }
+  } else tone.current = new Array<number>(num_steps).fill(tone_init);
   audio_main.current.setTone(tone.current);
 
   const steps = useRef(new Array<number>(num_steps).fill(0));
   if (use_preset) {
     steps.current = SequencerPreset1.Steps;
-  }
+  } else steps.current = new Array<number>(num_steps).fill(0);
   audio_main.current.SetSteps(steps.current);
 
   // Per step setter functions for 2D Button
@@ -167,25 +172,32 @@ const App = () => {
     <>
       <BackgroundDiv palette={palette}>
         <div>
+          <InstructionOverlay
+            open={view_instructions}
+            onClose={setViewInstructions}
+            palette={palette}
+          />
           <div className="flex flex-col w-full h-screen px-20 pt-10 gap-10 overflow-hidden">
-            <div className="flex flex-col gap-10">
+            <div className="flex flex-row justify-between items-end">
               <h1
                 className={
                   "text-8xl font-mono -ml-2" + ColorPalette(palette).text_header
                 }
               >
-                BASSLINE
+                SUBSTRATA
               </h1>
-              <p className={"text-xl font-mono" + ColorPalette(palette).text_1}>
-                click on a square to create a step in the sequence. <br />
-                drag on the square to set primary settings. <br />
-                <span className="pl-10">x = decay time, y = volume</span> <br />
-                press "shift" and drag on the square to set secondary settings.{" "}
-                <br />
-                <span className="pl-10">x = tone, y = pitch bend</span> <br />
-                holding "shift" while turning knobs immediately sets to minimum
-                or maximum value.
-              </p>
+              <button
+                className={
+                  "text-md h-max w-max rounded-xl border font-mono p-3" +
+                  ColorPalette(palette).text_1 +
+                  ColorPalette(palette).knob_border
+                }
+                onClick={() => {
+                  setViewInstructions(true);
+                }}
+              >
+                Instructions
+              </button>
             </div>
             <div className="grid grid-cols-8 h-auto gap-x-5 gap-y-10 w-full max-w-screen-2xl bg-transparent items-center">
               <div className="flex flex-col gap-4">
@@ -233,9 +245,9 @@ const App = () => {
                 key="1001"
                 init_value={ring_mod_params.current.frequency}
                 units="Hz"
-                min_value={20}
-                max_value={1000}
-                name="Mod Tone"
+                min_value={5}
+                max_value={600}
+                name="Ring Freq"
                 onChange={(x: number) => {
                   ring_mod_params.current.frequency = x;
                   audio_main.current.SetRingModParams(
@@ -251,7 +263,7 @@ const App = () => {
                 units="dB"
                 min_value={-60}
                 max_value={0}
-                name="Mod Lvl"
+                name="Ring Lvl"
                 onChange={(x: number) => {
                   ring_mod_params.current.gain = x;
                   audio_main.current.SetRingModParams(
@@ -267,7 +279,7 @@ const App = () => {
                 units="dB"
                 min_value={-30}
                 max_value={0}
-                name="Delay Lvl"
+                name="Echo Lvl"
                 onChange={(x: number) => {
                   delay_params.current.mix = x;
                   audio_main.current.setDelayParams(x, delay_params.current.fb);
@@ -280,7 +292,7 @@ const App = () => {
                 units="dB"
                 min_value={-30}
                 max_value={0}
-                name="Delay FB"
+                name="Echo FB"
                 onChange={(x: number) => {
                   delay_params.current.fb = x;
                   audio_main.current.setDelayParams(
@@ -328,26 +340,28 @@ const App = () => {
               })}
             </div>
 
-            <div className="grid grid-col-2 h-full">
-              <div className="flex flex-col gap-y-5">
+            <div className="grid grid-cols-2 h-full pb-10">
+              <div className="flex flex-col gap-y-3 h-full">
                 <ToggleSlider
-                  title="Colors"
-                  on_init={palette == 1}
-                  text_color={ColorPalette(0).text_1}
-                  border_color={ColorPalette(0).knob_border}
-                  knob_color={ColorPalette(0).knob_dot}
-                  knob_active_color={ColorPalette(1).knob_dot}
-                  text_off="Open Sky"
-                  text_on="Till Dawn"
+                  title="Octave"
+                  on_init={octave == 2}
+                  text_color={ColorPalette(palette).text_1}
+                  border_color={ColorPalette(palette).knob_border}
+                  knob_color={" bg-slate-50 "}
+                  knob_active_color={" bg-slate-50 "}
+                  text_off="Low"
+                  text_on="High"
                   onToggle={(on: boolean) => {
-                    setPalette(on ? 1 : 0);
+                    const o = on ? 2 : 1;
+                    setOctave(o);
+                    audio_main.current.setOctave(o);
                   }}
                 />
-                <ToggleSlider
+                {/* <ToggleSlider
                   title="Preset"
                   on_init={use_preset}
-                  text_color={ColorPalette(0).text_1}
-                  border_color={ColorPalette(0).knob_border}
+                  text_color={ColorPalette(palette).text_2}
+                  border_color={ColorPalette(palette).border_button_standard}
                   knob_color={ColorPalette(0).knob_dot}
                   knob_active_color={ColorPalette(0).knob_dot}
                   text_off="Off"
@@ -355,9 +369,22 @@ const App = () => {
                   onToggle={(on: boolean) => {
                     setPreset(on);
                   }}
+                /> */}
+                <ToggleSlider
+                  title="Colors"
+                  on_init={palette == 1}
+                  text_color={ColorPalette(palette).text_1}
+                  border_color={ColorPalette(palette).knob_border}
+                  knob_color={" bg-slate-50 "}
+                  knob_active_color={ColorPalette(1).knob_dot}
+                  text_off="Open Sky"
+                  text_on="Till Dawn"
+                  onToggle={(on: boolean) => {
+                    setPalette(on ? 1 : 0);
+                  }}
                 />
               </div>
-              <div className="flex w-full h-full justify-end items-end pb-10">
+              <div className="flex h-full justify-end items-end">
                 <div>
                   <h1
                     className={

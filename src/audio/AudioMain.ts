@@ -7,11 +7,13 @@ export class AudioMain {
   private ring_mod_gain: GainNode;
   private ring_mod_level: GainNode;
   private ring_mod_osc: OscillatorNode;
+  private waveform: PeriodicWave;
   private running = false;
   private started = false;
   private current_step = 0;
   private total_steps = 0;
   private bpm = 0;
+  private octave = 2;
   private steps: number[];
   private velocity: number[];
   private decay: number[];
@@ -57,6 +59,10 @@ export class AudioMain {
     this.tone = new Array<number>(num_steps).fill(0);
     this.pitch_bend = new Array<number>(num_steps).fill(0);
 
+    const harmonics = [0, 1, 0, db2mag(-24), 0, db2mag(-40)];
+    const real = new Array(harmonics.length).fill(0);
+    const imag = harmonics;
+    this.waveform = this.ctx.createPeriodicWave(real, imag);
 
     this.updateStepUI = updateStep;
   }
@@ -66,10 +72,11 @@ export class AudioMain {
       tone: number) {
     if (!this.running) return;
     const ctx = this.ctx;
-    const root_hz = NoteToPitch('G', 2);
+    const root_hz = NoteToPitch('G', this.octave);
     const osc = createOscillator(
         ctx, 'sine', root_hz + 640 * pitch_bend * pitch_bend, 0);
-    osc.frequency.setTargetAtTime(80, at_time, 0.4 * decay);
+    osc.setPeriodicWave(this.waveform);
+    osc.frequency.setTargetAtTime(root_hz, at_time, 0.4 * decay);
     const fm_osc = createOscillator(ctx, 'sine', root_hz * 1.4, 0);
     const fm_gain = createGain(ctx, tone * 200);
     fm_osc.connect(fm_gain).connect(osc.frequency);
@@ -139,6 +146,10 @@ export class AudioMain {
 
   public setHPFrequency(frequency: number) {
     this.hp.frequency.setTargetAtTime(frequency, this.ctx.currentTime, 0.1);
+  }
+
+  public setOctave(octave: number) {
+    this.octave = octave;
   }
 
   private step() {

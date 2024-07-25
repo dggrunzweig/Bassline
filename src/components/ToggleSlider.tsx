@@ -30,7 +30,7 @@ const ToggleSlider = ({
     onToggle(enabled);
   };
   return (
-    <div className="flex flex-row gap-3">
+    <div className="flex flex-row gap-3 w-max">
       <h1 className={"text-md font-mono w-18" + text_color}>{title}</h1>
       <div
         className={"w-12 h-6 rounded-3xl border" + border_color}
@@ -64,7 +64,7 @@ const ToggleSlider = ({
           }
         ></div>
       </div>
-      <h1 className={"text-md font-mono" + text_color}>
+      <h1 className={"text-md font-mono w-18" + text_color}>
         {on ? text_on : text_off}
       </h1>
     </div>
