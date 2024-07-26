@@ -63,7 +63,8 @@ const App = () => {
     new AudioMain(num_steps, BPM.current, setCurrentStep)
   );
 
-  const [use_preset, setPreset] = useState(true);
+  // Should we fill in the machine with a basic preset when the page is opened
+  const use_preset = true;
 
   // per step parameters
   audio_main.current.setOctave(octave);

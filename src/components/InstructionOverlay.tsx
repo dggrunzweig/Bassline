@@ -1,8 +1,6 @@
-import React from "react";
-
 interface props {
   palette: number;
-  onClose: (show: boolean) => {};
+  onClose: Function;
   open: boolean;
 }
 
