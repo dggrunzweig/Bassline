@@ -183,7 +183,7 @@ const App = () => {
             onClose={setViewInstructions}
             palette={palette}
           />
-          <div className="flex flex-col w-full h-screen px-20 pt-10 gap-10 overflow-hidden">
+          <div className="flex flex-col w-full h-screen px-20 pt-10 gap-10 max-w-screen-2xl overflow-hidden">
             <div className="flex flex-row justify-between items-end">
               <h1
                 className={
@@ -205,7 +205,7 @@ const App = () => {
                 Instructions
               </button>
             </div>
-            <div className="grid grid-cols-8 h-auto gap-x-5 gap-y-10 w-full max-w-screen-2xl bg-transparent items-center">
+            <div className="grid grid-cols-8 h-auto gap-x-5 gap-y-10 w-full bg-transparent items-center">
               <div className="flex flex-col gap-4">
                 <button
                   className={
