@@ -4,9 +4,9 @@ import {BPMToTime, createAudioContext, createBiquadFilter, createCompressor, cre
 export class AudioMain {
   private ctx: AudioContext;
   private comp: DynamicsCompressorNode;
-  private ring_mod_gain: GainNode;
-  private ring_mod_level: GainNode;
-  private ring_mod_osc: OscillatorNode;
+  private global_fm_level: GainNode;
+  private global_fm_osc: OscillatorNode;
+  private out_gain: GainNode;
   private waveform: PeriodicWave;
   private running = false;
   private started = false;
@@ -32,11 +32,11 @@ export class AudioMain {
   private setRecording: Function;
   constructor(num_steps: number, bpm: number) {
     this.ctx = createAudioContext();
-    this.comp = createCompressor(this.ctx, -12, 4, 4, 0.03, 0.1);
-    this.ring_mod_gain = createGain(this.ctx, 1.0);
-    this.ring_mod_level = createGain(this.ctx, 0.6);
-    this.ring_mod_osc = createOscillator(this.ctx, 'triangle', 100, 0);
+    this.comp = createCompressor(this.ctx, -12, 4, 4, 0.02, 0.1);
+    this.global_fm_level = createGain(this.ctx, 0.6);
+    this.global_fm_osc = createOscillator(this.ctx, 'triangle', 100, 0);
     this.hp = createBiquadFilter(this.ctx, 'highpass', 20, 4.0, 0);
+    this.out_gain = createGain(this.ctx, db2mag(-6));
     this.delay = createDigitalDelay(this.ctx, BPMToTime(bpm, 3 / 8), -6);
     const delay_filter = createBiquadFilter(this.ctx, 'highpass', 400, 2.0, 0.);
     this.delay.output.gain.setValueAtTime(0, 0);
@@ -45,13 +45,13 @@ export class AudioMain {
     this.step_analyzer = this.ctx.createAnalyser();
     this.step_node.connect(this.step_analyzer);
 
-    this.ring_mod_gain.connect(this.hp).connect(this.comp).connect(
+    // end chain
+    this.out_gain.connect(this.hp).connect(this.comp).connect(
         this.ctx.destination);
     this.comp.connect(this.analyzer);
-    this.ring_mod_gain.connect(delay_filter).connect(this.delay.input);
+    this.out_gain.connect(delay_filter).connect(this.delay.input);
     this.delay.output.connect(this.comp);
-    this.ring_mod_osc.connect(this.ring_mod_level)
-        .connect(this.ring_mod_gain.gain);
+    this.global_fm_osc.connect(this.global_fm_level);
 
     this.recording_node = new RecorderNode(this.ctx, this.comp);
     this.setRecording = () => {};
@@ -72,25 +72,25 @@ export class AudioMain {
 
   private Trigger(
       at_time: number, velocity: number, decay: number, pitch_bend: number,
-      tone: number) {
+      tone: number, step_dur: number) {
     if (!this.running) return;
     const ctx = this.ctx;
     const root_hz = NoteToPitch('G', this.octave);
     const osc = createOscillator(
         ctx, 'sine', root_hz + 640 * pitch_bend * pitch_bend, 0);
     osc.setPeriodicWave(this.waveform);
-    osc.frequency.setTargetAtTime(root_hz, at_time, 0.4 * decay);
+    osc.frequency.setTargetAtTime(root_hz, at_time, 0.8 * 2 * decay * step_dur);
     const fm_osc = createOscillator(ctx, 'sine', root_hz * 1.4, 0);
     const fm_gain = createGain(ctx, tone * 200);
     fm_osc.connect(fm_gain).connect(osc.frequency);
+    this.global_fm_level.connect(osc.frequency);
     fm_osc.start();
     osc.start();
     const vca = createGain(ctx, 0);
-    const gain = createGain(ctx, db2mag(-6));
-    osc.connect(vca).connect(gain).connect(this.ring_mod_gain);
+    osc.connect(vca).connect(this.out_gain);
 
     vca.gain.setTargetAtTime(db2mag(-12 * (1 - velocity)), at_time, 0.0001);
-    vca.gain.setTargetAtTime(0, at_time + 0.01, 0.5 * decay);
+    vca.gain.setTargetAtTime(0, at_time + 0.01, 2 * decay * step_dur);
 
     setTimeout(() => {
       osc.stop();
@@ -109,14 +109,12 @@ export class AudioMain {
     return this.analyzer;
   }
 
-  public SetRingModParams(frequency: number, level_dB: number) {
-    this.ring_mod_osc.frequency.setTargetAtTime(
+  public SetRingModParams(frequency: number, freq_range: number) {
+    this.global_fm_osc.frequency.setTargetAtTime(
         frequency, this.ctx.currentTime, 0.1);
-    this.ring_mod_level.gain.setTargetAtTime(
-        db2mag(level_dB), this.ctx.currentTime, 0.1);
+    this.global_fm_level.gain.setTargetAtTime(
+        freq_range, this.ctx.currentTime, 0.1);
   };
-
-
 
   public SetSteps(steps: number[]) {
     this.steps = steps;
@@ -164,7 +162,7 @@ export class AudioMain {
       this.Trigger(
           current_time, this.velocity[this.current_step],
           this.decay[this.current_step], this.pitch_bend[this.current_step],
-          this.tone[this.current_step]);
+          this.tone[this.current_step], step_duration);
     }
     this.step_node.offset.setValueAtTime(this.current_step, current_time);
     current_time += step_duration;
@@ -219,7 +217,7 @@ export class AudioMain {
   public Start() {
     if (this.ctx.state == 'suspended') this.ctx.resume();
     if (!this.started) {
-      this.ring_mod_osc.start();
+      this.global_fm_osc.start();
       this.step_node.start();
       this.started = true;
     }

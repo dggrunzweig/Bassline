@@ -132,13 +132,13 @@ const App = () => {
 
   // Knob Parameters
   // ring mod
-  const ring_mod_params = useRef({
+  const fm_params = useRef({
     frequency: 100,
-    gain: -24,
+    range: 0,
   });
   audio_main.current.SetRingModParams(
-    ring_mod_params.current.frequency,
-    ring_mod_params.current.gain
+    fm_params.current.frequency,
+    fm_params.current.range
   );
 
   // delay
@@ -249,31 +249,31 @@ const App = () => {
               />
               <Knob
                 key="1001"
-                init_value={ring_mod_params.current.frequency}
+                init_value={fm_params.current.frequency}
                 units="Hz"
-                min_value={5}
-                max_value={600}
-                name="Ring Freq"
+                min_value={1}
+                max_value={300}
+                name="FM Freq"
                 onChange={(x: number) => {
-                  ring_mod_params.current.frequency = x;
+                  fm_params.current.frequency = x;
                   audio_main.current.SetRingModParams(
                     x,
-                    ring_mod_params.current.gain
+                    fm_params.current.range
                   );
                 }}
                 palette={palette}
               />
               <Knob
                 key="1002"
-                init_value={ring_mod_params.current.gain}
-                units="dB"
-                min_value={-60}
-                max_value={0}
-                name="Ring Lvl"
+                init_value={fm_params.current.range}
+                units="Hz"
+                min_value={0}
+                max_value={1000}
+                name="FM Lvl"
                 onChange={(x: number) => {
-                  ring_mod_params.current.gain = x;
+                  fm_params.current.range = x;
                   audio_main.current.SetRingModParams(
-                    ring_mod_params.current.frequency,
+                    fm_params.current.frequency,
                     x
                   );
                 }}
@@ -297,7 +297,7 @@ const App = () => {
                 init_value={delay_params.current.fb}
                 units="dB"
                 min_value={-30}
-                max_value={0}
+                max_value={-3}
                 name="Echo FB"
                 onChange={(x: number) => {
                   delay_params.current.fb = x;
