@@ -177,7 +177,7 @@ const App = () => {
   return (
     <>
       <BackgroundDiv palette={palette}>
-        <div>
+        <div className="flex flex-col w-full h-screen items-center">
           <InstructionOverlay
             open={view_instructions}
             onClose={setViewInstructions}
