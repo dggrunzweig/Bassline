@@ -11,7 +11,11 @@ import Visualizer from "./components/Visualizer";
 import { SequencerPreset1 } from "./Presets";
 import InstructionOverlay from "./components/InstructionOverlay";
 
-const App = () => {
+interface props {
+  audio_main: AudioMain;
+}
+
+const App = ({ audio_main }: props) => {
   // prevent use on mobile platforms
 
   const [palette, setPalette] = useState(0);
@@ -59,12 +63,10 @@ const App = () => {
   const [octave, setOctave] = useState(1);
   const [view_instructions, setViewInstructions] = useState(true);
 
-  const audio_main = useRef(new AudioMain(num_steps, BPM.current));
-
   // update timer to check current step in sequencer
   useEffect(() => {
     setInterval(() => {
-      setCurrentStep(audio_main.current.GetCurrentStep());
+      setCurrentStep(audio_main.GetCurrentStep());
     }, 100);
   });
 
@@ -72,62 +74,62 @@ const App = () => {
   const use_preset = true;
 
   // per step parameters
-  audio_main.current.setOctave(octave);
+  audio_main.setOctave(octave);
 
   const vel_init = 0.9;
   const velocity = useRef(new Array<number>(num_steps).fill(vel_init));
   if (use_preset) {
     velocity.current = SequencerPreset1.Volume;
   } else velocity.current = new Array<number>(num_steps).fill(vel_init);
-  audio_main.current.setVelocity(velocity.current);
+  audio_main.setVelocity(velocity.current);
 
   const decay_init = 0.2;
   const decay = useRef(new Array<number>(num_steps).fill(decay_init));
   if (use_preset) {
     decay.current = SequencerPreset1.Decay;
   } else decay.current = new Array<number>(num_steps).fill(decay_init);
-  audio_main.current.setDecay(decay.current);
+  audio_main.setDecay(decay.current);
 
   const pb_init = 0.2;
   const pitch_bend = useRef(new Array<number>(num_steps).fill(pb_init));
   if (use_preset) {
     pitch_bend.current = SequencerPreset1.PitchBend;
   } else pitch_bend.current = new Array<number>(num_steps).fill(pb_init);
-  audio_main.current.setPitchBend(pitch_bend.current);
+  audio_main.setPitchBend(pitch_bend.current);
 
   const tone_init = 0.1;
   const tone = useRef(new Array<number>(num_steps).fill(tone_init));
   if (use_preset) {
     tone.current = SequencerPreset1.Tone;
   } else tone.current = new Array<number>(num_steps).fill(tone_init);
-  audio_main.current.setTone(tone.current);
+  audio_main.setTone(tone.current);
 
   const steps = useRef(new Array<number>(num_steps).fill(0));
   if (use_preset) {
     steps.current = SequencerPreset1.Steps;
   } else steps.current = new Array<number>(num_steps).fill(0);
-  audio_main.current.SetSteps(steps.current);
+  audio_main.SetSteps(steps.current);
 
   // Per step setter functions for 2D Button
   const Toggle = (on: boolean, step_index: number) => {
     steps.current[step_index] = on ? 1 : 0;
-    audio_main.current.SetSteps(steps.current);
+    audio_main.SetSteps(steps.current);
   };
   const xDragPrimary = (x: number, step_index: number) => {
     decay.current[step_index] = x;
-    audio_main.current.setDecay(decay.current);
+    audio_main.setDecay(decay.current);
   };
   const yDragPrimary = (y: number, step_index: number) => {
     velocity.current[step_index] = y;
-    audio_main.current.setVelocity(velocity.current);
+    audio_main.setVelocity(velocity.current);
   };
   const xDragSecondary = (x: number, step_index: number) => {
     tone.current[step_index] = x;
-    audio_main.current.setTone(tone.current);
+    audio_main.setTone(tone.current);
   };
   const yDragSecondary = (y: number, step_index: number) => {
     pitch_bend.current[step_index] = y;
-    audio_main.current.setPitchBend(pitch_bend.current);
+    audio_main.setPitchBend(pitch_bend.current);
   };
 
   // Knob Parameters
@@ -136,7 +138,7 @@ const App = () => {
     frequency: 100,
     range: 0,
   });
-  audio_main.current.SetRingModParams(
+  audio_main.SetRingModParams(
     fm_params.current.frequency,
     fm_params.current.range
   );
@@ -146,14 +148,11 @@ const App = () => {
     mix: -30,
     fb: -12,
   });
-  audio_main.current.setDelayParams(
-    delay_params.current.mix,
-    delay_params.current.fb
-  );
+  audio_main.setDelayParams(delay_params.current.mix, delay_params.current.fb);
 
   // High Pass Filter
   const hpf = useRef(20);
-  audio_main.current.setHPFrequency(hpf.current);
+  audio_main.setHPFrequency(hpf.current);
 
   // Prevent display is the window is too narrow
   if (!validDimensions) {
@@ -214,11 +213,16 @@ const App = () => {
                     ColorPalette(palette).knob_border
                   }
                   onClick={() => {
-                    audio_main.current.Start();
-                    setRunning(audio_main.current.isRunning());
+                    audio_main.Start();
+                    setRunning(audio_main.isRunning());
                   }}
+                  disabled={audio_main.isUsingMidi()}
                 >
-                  {running ? "Stop" : "Run"}
+                  {audio_main.isUsingMidi()
+                    ? "EXT MIDI"
+                    : running
+                    ? "Stop"
+                    : "Run"}
                 </button>
                 <button
                   className={
@@ -227,7 +231,7 @@ const App = () => {
                     ColorPalette(palette).knob_border
                   }
                   onClick={() => {
-                    audio_main.current.RecordAudio(32, setRecording);
+                    audio_main.RecordAudio(32, setRecording);
                   }}
                   disabled={recording}
                 >
@@ -241,9 +245,10 @@ const App = () => {
                 min_value={60}
                 max_value={180}
                 name="Tempo"
+                enabled={!audio_main.isUsingMidi()}
                 onChange={(x: number) => {
                   BPM.current = x;
-                  audio_main.current.setBPM(x);
+                  audio_main.setBPM(x);
                 }}
                 palette={palette}
               />
@@ -254,12 +259,10 @@ const App = () => {
                 min_value={1}
                 max_value={300}
                 name="FM Freq"
+                enabled={true}
                 onChange={(x: number) => {
                   fm_params.current.frequency = x;
-                  audio_main.current.SetRingModParams(
-                    x,
-                    fm_params.current.range
-                  );
+                  audio_main.SetRingModParams(x, fm_params.current.range);
                 }}
                 palette={palette}
               />
@@ -270,12 +273,10 @@ const App = () => {
                 min_value={0}
                 max_value={1000}
                 name="FM Lvl"
+                enabled={true}
                 onChange={(x: number) => {
                   fm_params.current.range = x;
-                  audio_main.current.SetRingModParams(
-                    fm_params.current.frequency,
-                    x
-                  );
+                  audio_main.SetRingModParams(fm_params.current.frequency, x);
                 }}
                 palette={palette}
               />
@@ -286,9 +287,10 @@ const App = () => {
                 min_value={-30}
                 max_value={0}
                 name="Echo Lvl"
+                enabled={!audio_main.isUsingMidi()}
                 onChange={(x: number) => {
                   delay_params.current.mix = x;
-                  audio_main.current.setDelayParams(x, delay_params.current.fb);
+                  audio_main.setDelayParams(x, delay_params.current.fb);
                 }}
                 palette={palette}
               />
@@ -299,12 +301,10 @@ const App = () => {
                 min_value={-30}
                 max_value={-3}
                 name="Echo FB"
+                enabled={!audio_main.isUsingMidi()}
                 onChange={(x: number) => {
                   delay_params.current.fb = x;
-                  audio_main.current.setDelayParams(
-                    delay_params.current.mix,
-                    x
-                  );
+                  audio_main.setDelayParams(delay_params.current.mix, x);
                 }}
                 palette={palette}
               />
@@ -315,14 +315,15 @@ const App = () => {
                 min_value={20}
                 max_value={500}
                 name="HPF"
+                enabled={true}
                 onChange={(x: number) => {
                   hpf.current = x;
-                  audio_main.current.setHPFrequency(x);
+                  audio_main.setHPFrequency(x);
                 }}
                 palette={palette}
               />
 
-              <Visualizer analyzer={audio_main.current.GetAnalyzer()} />
+              <Visualizer analyzer={audio_main.GetAnalyzer()} />
               {steps.current.map((_, i) => {
                 return (
                   <div key={i}>
@@ -360,7 +361,7 @@ const App = () => {
                   onToggle={(on: boolean) => {
                     const o = on ? 2 : 1;
                     setOctave(o);
-                    audio_main.current.setOctave(o);
+                    audio_main.setOctave(o);
                   }}
                 />
                 {/* <ToggleSlider

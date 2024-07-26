@@ -1,3 +1,4 @@
+import {GetTypeAndChannelFromData, ListMidiInputs, MidiInit, SetDeviceInputEventListener} from './midi_utility';
 import RecorderNode from './RecorderNode';
 import {BPMToTime, createAudioContext, createBiquadFilter, createCompressor, createDigitalDelay, createGain, createOscillator, db2mag, DigitalDelay, NoteToPitch} from './Utilities';
 
@@ -30,7 +31,11 @@ export class AudioMain {
   private record_steps = 0;
   private recording_node: RecorderNode;
   private setRecording: Function;
+  private midi: MIDIAccess|undefined;
+  private using_midi = false;
+  private clock_pulses = 0;
   constructor(num_steps: number, bpm: number) {
+    console.log('Create Audio Main');
     this.ctx = createAudioContext();
     this.comp = createCompressor(this.ctx, -12, 4, 4, 0.02, 0.1);
     this.global_fm_level = createGain(this.ctx, 0.6);
@@ -68,6 +73,56 @@ export class AudioMain {
     const real = new Array(harmonics.length).fill(0);
     const imag = harmonics;
     this.waveform = this.ctx.createPeriodicWave(real, imag);
+
+    // midi
+    // MidiInit().then((midi) => {
+    //   this.midi = midi;
+    //   const name = 'VirtualMidi Bus 1';
+    //   SetDeviceInputEventListener(this.midi, name, (data: number[]) => {
+    //     // look for clock signal only
+    //     const lower_half = data[0] & 0b00001111;
+    //     const upper_half = (data[0] & 0b11110000) >> 4;
+    //     if (upper_half == 15) {
+    //       // midi clock pulse, 24 per quarter note
+    //       if (lower_half == 8) {
+    //         this.using_midi = true;
+    //         if (this.running) {
+    //           if (this.clock_pulses == 0) {
+    //             if (this.steps[this.current_step] == 1) {
+    //               this.Trigger(
+    //                   this.ctx.currentTime + 0.01,
+    //                   this.velocity[this.current_step],
+    //                   this.decay[this.current_step],
+    //                   this.pitch_bend[this.current_step],
+    //                   this.tone[this.current_step], 60 / (120 * 4));
+    //             }
+    //             this.step_node.offset.setValueAtTime(
+    //                 this.current_step, this.ctx.currentTime);
+    //             this.current_step = (this.current_step + 1) %
+    //             this.total_steps;
+    //           }
+    //           this.clock_pulses = (this.clock_pulses + 1) %
+    //               6;  // 24 pulses per quarter note, 6 pulses = 16th
+    //         }
+    //       }
+    //       // start message
+    //       if (lower_half == 10) {
+    //         this.InitialStart();
+    //         clearInterval(this.sequence_timer);
+    //         this.running = true;
+    //         this.using_midi = true;
+    //         this.current_step = 0;
+    //         this.clock_pulses = 0;
+    //       }
+    //       // stop message
+    //       if (lower_half == 12) {
+    //         clearInterval(this.sequence_timer);
+    //         this.running = false;
+    //         this.using_midi = false;
+    //       }
+    //     }
+    //   });
+    // });
   }
 
   private Trigger(
@@ -215,13 +270,17 @@ export class AudioMain {
     }, 50);
   }
 
-  public Start() {
+  private InitialStart() {
     if (this.ctx.state == 'suspended') this.ctx.resume();
     if (!this.started) {
       this.global_fm_osc.start();
       this.step_node.start();
       this.started = true;
     }
+  }
+
+  public Start() {
+    this.InitialStart();
     this.running = !this.running;
     if (!this.running) {
       clearInterval(this.sequence_timer);
@@ -233,6 +292,10 @@ export class AudioMain {
 
   public isRunning() {
     return this.running;
+  }
+
+  public isUsingMidi() {
+    return this.using_midi;
   }
 
   public RecordAudio(duration_steps: number, setRecording: Function) {

@@ -9,6 +9,7 @@ interface props {
   min_value: number;
   max_value: number;
   palette: number;
+  enabled: boolean;
 }
 
 const Knob = ({
@@ -19,6 +20,7 @@ const Knob = ({
   max_value,
   onChange,
   palette,
+  enabled = true,
 }: props) => {
   const [current_val, setValue] = useState(init_value);
 
@@ -53,8 +55,10 @@ const Knob = ({
             if (angle < 180) new_val = min_value;
             else new_val = max_value;
           }
-          onChange(new_val);
-          setValue(new_val);
+          if (enabled) {
+            onChange(new_val);
+            setValue(new_val);
+          }
         }
       }}
     >
@@ -73,12 +77,14 @@ const Knob = ({
         }
         style={{ transform: r_tag }}
       >
-        <div
-          className={
-            "aspect-square rounded-full h-1/6 mt-1 " +
-            ColorPalette(palette).knob_dot
-          }
-        ></div>
+        {enabled && (
+          <div
+            className={
+              "aspect-square rounded-full h-1/6 mt-1 " +
+              ColorPalette(palette).knob_dot
+            }
+          ></div>
+        )}
       </div>
       <div
         className={
@@ -86,7 +92,7 @@ const Knob = ({
           ColorPalette(palette).text_1
         }
       >
-        {current_val + units}
+        {enabled ? current_val + units : "Disabled"}
       </div>
     </div>
   );
