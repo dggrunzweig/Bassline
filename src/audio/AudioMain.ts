@@ -11,6 +11,7 @@ export class AudioMain {
   private running = false;
   private started = false;
   private current_step = 0;
+  private sequence_timer = 0;
   private total_steps = 0;
   private bpm = 0;
   private octave = 2;
@@ -19,26 +20,30 @@ export class AudioMain {
   private decay: number[];
   private tone: number[];
   private pitch_bend: number[];
-  private updateStepUI: Function;
   private delay: DigitalDelay;
   private hp: BiquadFilterNode;
   private analyzer: AnalyserNode;
+  private step_node: ConstantSourceNode;
+  private step_analyzer: AnalyserNode;
   private should_record = false;
   private recording = false;
   private record_steps = 0;
   private recording_node: RecorderNode;
   private setRecording: Function;
-  constructor(num_steps: number, bpm: number, updateStep: Function) {
+  constructor(num_steps: number, bpm: number) {
     this.ctx = createAudioContext();
     this.comp = createCompressor(this.ctx, -12, 4, 4, 0.03, 0.1);
     this.ring_mod_gain = createGain(this.ctx, 1.0);
     this.ring_mod_level = createGain(this.ctx, 0.6);
     this.ring_mod_osc = createOscillator(this.ctx, 'triangle', 100, 0);
-    this.hp = createBiquadFilter(this.ctx, 'highpass', 20, 2.0, 0);
+    this.hp = createBiquadFilter(this.ctx, 'highpass', 20, 4.0, 0);
     this.delay = createDigitalDelay(this.ctx, BPMToTime(bpm, 3 / 8), -6);
     const delay_filter = createBiquadFilter(this.ctx, 'highpass', 400, 2.0, 0.);
     this.delay.output.gain.setValueAtTime(0, 0);
     this.analyzer = this.ctx.createAnalyser();
+    this.step_node = this.ctx.createConstantSource();
+    this.step_analyzer = this.ctx.createAnalyser();
+    this.step_node.connect(this.step_analyzer);
 
     this.ring_mod_gain.connect(this.hp).connect(this.comp).connect(
         this.ctx.destination);
@@ -63,8 +68,6 @@ export class AudioMain {
     const real = new Array(harmonics.length).fill(0);
     const imag = harmonics;
     this.waveform = this.ctx.createPeriodicWave(real, imag);
-
-    this.updateStepUI = updateStep;
   }
 
   private Trigger(
@@ -80,13 +83,15 @@ export class AudioMain {
     const fm_osc = createOscillator(ctx, 'sine', root_hz * 1.4, 0);
     const fm_gain = createGain(ctx, tone * 200);
     fm_osc.connect(fm_gain).connect(osc.frequency);
-    fm_osc.start(at_time);
-    osc.start(at_time);
-    const vca = createGain(ctx, db2mag(-12 * (1 - velocity)));
+    fm_osc.start();
+    osc.start();
+    const vca = createGain(ctx, 0);
     const gain = createGain(ctx, db2mag(-6));
     osc.connect(vca).connect(gain).connect(this.ring_mod_gain);
 
-    vca.gain.setTargetAtTime(0, at_time, 0.5 * decay);
+    vca.gain.setTargetAtTime(db2mag(-12 * (1 - velocity)), at_time, 0.0001);
+    vca.gain.setTargetAtTime(0, at_time + 0.01, 0.5 * decay);
+
     setTimeout(() => {
       osc.stop();
       osc.disconnect();
@@ -95,7 +100,9 @@ export class AudioMain {
   }
 
   public GetCurrentStep() {
-    return this.current_step;
+    const data = new Float32Array(this.step_analyzer.fftSize);
+    this.step_analyzer.getFloatTimeDomainData(data);
+    return data[0];
   }
 
   public GetAnalyzer() {
@@ -152,24 +159,39 @@ export class AudioMain {
     this.octave = octave;
   }
 
-  private step() {
-    const step_duration = 60 / (4 * this.bpm);
-    setTimeout(() => {
-      if (!this.running) return;
-      if (this.steps[this.current_step] == 1) {
-        this.Trigger(
-            this.ctx.currentTime + 0.01, this.velocity[this.current_step],
-            this.decay[this.current_step], this.pitch_bend[this.current_step],
-            this.tone[this.current_step]);
-      }
+  private step(current_time: number, step_duration: number): number {
+    if (this.steps[this.current_step] == 1) {
+      this.Trigger(
+          current_time, this.velocity[this.current_step],
+          this.decay[this.current_step], this.pitch_bend[this.current_step],
+          this.tone[this.current_step]);
+    }
+    this.step_node.offset.setValueAtTime(this.current_step, current_time);
+    current_time += step_duration;
+    this.current_step = (this.current_step + 1) % this.total_steps;
+    if (this.recording) this.record_steps--;
+    return current_time;
+  }
+
+  private Sequence() {
+    let current_time = this.ctx.currentTime;
+    let step_duration = 60 / (4 * this.bpm);
+    current_time = this.step(current_time, step_duration);
+    this.sequence_timer = setInterval(() => {
+      step_duration = 60 / (4 * this.bpm);
       // fired once when the recording is requested
       if (this.should_record && this.current_step == 0 && !this.recording) {
         this.recording = true;
         this.recording_node.StartRecording();
         console.log('Start Recording');
       }
+
+      while (current_time < this.ctx.currentTime + step_duration) {
+        current_time = this.step(current_time, step_duration);
+      }
+
       if (this.recording) {
-        if (this.record_steps <= 0) {
+        if (this.record_steps < 0) {
           // stop recording
           this.recording = false;
           this.should_record = false;
@@ -190,23 +212,24 @@ export class AudioMain {
             }
           }, 2000);
         }
-        this.record_steps--;
       }
-      this.updateStepUI(this.current_step);
-      this.current_step = (this.current_step + 1) % this.total_steps;
-      this.step();
-    }, step_duration * 1000);
+    }, 50);
   }
 
   public Start() {
     if (this.ctx.state == 'suspended') this.ctx.resume();
     if (!this.started) {
       this.ring_mod_osc.start();
+      this.step_node.start();
       this.started = true;
     }
     this.running = !this.running;
-    this.current_step = 0;
-    this.step();
+    if (!this.running) {
+      clearInterval(this.sequence_timer);
+    } else {
+      this.current_step = 0;
+      this.Sequence();
+    }
   }
 
   public isRunning() {

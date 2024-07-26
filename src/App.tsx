@@ -59,9 +59,14 @@ const App = () => {
   const [octave, setOctave] = useState(1);
   const [view_instructions, setViewInstructions] = useState(true);
 
-  const audio_main = useRef(
-    new AudioMain(num_steps, BPM.current, setCurrentStep)
-  );
+  const audio_main = useRef(new AudioMain(num_steps, BPM.current));
+
+  // update timer to check current step in sequencer
+  useEffect(() => {
+    setInterval(() => {
+      setCurrentStep(audio_main.current.GetCurrentStep());
+    }, 100);
+  });
 
   // Should we fill in the machine with a basic preset when the page is opened
   const use_preset = true;
