@@ -40,8 +40,8 @@ const InstructionOverlay = ({ palette, open, onClose }: props) => {
           Press "Record" to record 4 loops of the audio (sequencer must be
           running) <br />
           "Tempo" adjusts the speed of the sequence. <br />
-          "Ring Freq" and "Ring Lvl" control the frequency and intensity of a
-          ring modulation effect. <br />
+          "FM Freq" and "FM Lvl" control the frequency and intensity of a
+          frequency modulation effect. <br />
           "Echo Lvl" and "Echo FB" control the level and feedback strength of an
           echo. <br />
           "HPF" controls the frequency of a high pass filter on the output.
