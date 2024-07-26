@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ColorPalette } from "./Colors";
-
+import { clamp } from "../audio/Utilities";
 interface props {
   name: string;
   units: string;
@@ -44,9 +44,10 @@ const Knob = ({
           const bounds = e.currentTarget.getBoundingClientRect();
           const x = (e.clientX - bounds.left) / bounds.width;
           const y = 1 - (e.clientY - bounds.top) / bounds.height;
-          const angle = (Math.atan2(x - 0.5, y - 0.5) * 180) / Math.PI + 180;
+          let angle = (Math.atan2(x - 0.5, y - 0.5) * 180) / Math.PI + 180;
+          angle = clamp(angle, 45, 315) - 45;
           let new_val = Math.floor(
-            (angle / 360) * (max_value - min_value) + min_value
+            (angle / 270) * (max_value - min_value) + min_value
           );
           if (e.shiftKey) {
             if (angle < 180) new_val = min_value;
