@@ -15,6 +15,7 @@ class RecorderNode {
   private blob_url: string;
   private started = false;
   private blob_ready = false;
+  private extension = '.webm';
   constructor(context: AudioContext, input_node: AudioNode) {
     this.chunks = new Array<BlobPart>();
     this.started = false;
@@ -36,6 +37,10 @@ class RecorderNode {
       } else if (MediaRecorder.isTypeSupported('audio/ogg;codecs=opus')) {
         // true on Firefox
         blob = new Blob(this.chunks, {type: 'audio/ogg; codecs=opus'});
+      } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+        // true for safari
+        blob = new Blob(this.chunks, {type: 'audio/mp4; codecs=aac'});
+        this.extension = '.mp4';
       } else {
         // can't save, no supported formats
         console.log('RecorderNode: No supported formats for saving!');
@@ -77,6 +82,10 @@ class RecorderNode {
       return this.blob_url;
     else
       return null;
+  }
+
+  GetExtension() {
+    return this.extension;
   }
 
   GetNode() {

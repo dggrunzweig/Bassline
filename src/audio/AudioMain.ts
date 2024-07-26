@@ -201,7 +201,8 @@ export class AudioMain {
               const blob = this.recording_node.GetBlobURL();
               if (blob) {
                 link.href = blob;
-                link.download = 'bassline.webm';
+                link.download =
+                    'substrata' + this.recording_node.GetExtension();
                 link.innerHTML = '';
                 link.click();
                 console.log('Downloading Recording');
