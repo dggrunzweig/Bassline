@@ -1,4 +1,5 @@
-import {GetTypeAndChannelFromData, ListMidiInputs, MidiInit, SetDeviceInputEventListener} from './midi_utility';
+// import {GetTypeAndChannelFromData, ListMidiInputs, MidiInit,
+// SetDeviceInputEventListener} from './midi_utility';
 import RecorderNode from './RecorderNode';
 import {BPMToTime, createAudioContext, createBiquadFilter, createCompressor, createDigitalDelay, createGain, createOscillator, db2mag, DigitalDelay, NoteToPitch} from './Utilities';
 
@@ -31,9 +32,9 @@ export class AudioMain {
   private record_steps = 0;
   private recording_node: RecorderNode;
   private setRecording: Function;
-  private midi: MIDIAccess|undefined;
+  // private midi: MIDIAccess|undefined;
   private using_midi = false;
-  private clock_pulses = 0;
+  // private clock_pulses = 0;
   constructor(num_steps: number, bpm: number) {
     console.log('Create Audio Main');
     this.ctx = createAudioContext();

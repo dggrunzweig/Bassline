@@ -33,12 +33,6 @@ export function SetDeviceInputEventListener(
   return device_found;
 }
 
-export function BlankMidiMapping() {
-  // 16 channels, 127 midi cc entries per channel
-  const ch = new Array<Array<string>>;
-  for (let i = 0; i < 16; ++i) ch.push(new Array<string>(127).fill(''));
-  return ch;
-}
 
 export function GetTypeAndChannelFromData(data: number[]) {
   const lower_half = data[0] & 0b00001111;
@@ -61,7 +55,7 @@ export function GetTypeAndChannelFromData(data: number[]) {
       type = 'Pitchbend'
       break;
     case 16:
-      type = 'sysex';
+      type = 'Sysex';
       break;
     default:
       break;

@@ -3,7 +3,7 @@ import BackgroundDiv from "./components/BackgroundDiv";
 import TwoDButton from "./components/2DButton";
 import Knob from "./components/Knob";
 import ToggleSlider from "./components/ToggleSlider";
-import { isMobile } from "react-device-detect";
+import { isMobileOnly } from "react-device-detect";
 import { ColorPalette } from "./components/Colors";
 
 import { AudioMain } from "./audio/AudioMain";
@@ -12,20 +12,22 @@ import { SequencerPreset1 } from "./Presets";
 import InstructionOverlay from "./components/InstructionOverlay";
 
 interface props {
+  num_steps: number;
+  init_bpm: number;
   audio_main: AudioMain;
 }
 
-const App = ({ audio_main }: props) => {
+const App = ({ num_steps, init_bpm, audio_main }: props) => {
   // prevent use on mobile platforms
 
   const [palette, setPalette] = useState(0);
-  if (isMobile) {
+  if (isMobileOnly) {
     return (
       <div>
         <BackgroundDiv palette={palette}>
           <p
             className={
-              "flex items-center h-screen text-center font-mono text-xl text-wrap" +
+              "flex flex-col justify-center items-center h-screen text-center font-mono text-xl text-wrap" +
               ColorPalette(palette).text_1
             }
           >
@@ -40,7 +42,7 @@ const App = ({ audio_main }: props) => {
   const [validDimensions, setValidDimensions] = useState(true);
   useEffect(() => {
     const window_resize = () => {
-      if (window.innerWidth < 1200) {
+      if (window.innerWidth < 1024) {
         setValidDimensions(false);
       } else {
         setValidDimensions(true);
@@ -53,8 +55,7 @@ const App = ({ audio_main }: props) => {
   });
 
   // states
-  const num_steps = 8;
-  const BPM = useRef(120);
+  const BPM = useRef(init_bpm);
 
   const [current_step, setCurrentStep] = useState(0);
 
@@ -347,7 +348,7 @@ const App = ({ audio_main }: props) => {
               })}
             </div>
 
-            <div className="grid grid-cols-2 h-full pb-10">
+            <div className="grid grid-row-2 w-full h-full pb-10">
               <div className="flex flex-col gap-y-3 h-full">
                 <ToggleSlider
                   title="Octave"
