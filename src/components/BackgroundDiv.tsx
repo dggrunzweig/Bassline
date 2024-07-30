@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import { ColorPalette } from "./Colors";
+import { isIOS } from "react-device-detect";
 
 interface props {
   palette: number;
@@ -9,13 +10,16 @@ const BackgroundDiv = ({ palette, children }: props) => {
   return (
     <div
       className={
-        "p-0 m-0 w-full h-screen bg-gradient-to-t via-40% to-100%" +
+        (isIOS ? "h-svh max-h-svh " : "h-screen ") +
+        "p-0 m-0 w-full bg-gradient-to-t via-40% to-100% overflow-hidden overscroll-none" +
         ColorPalette(palette).gradient_1 +
         ColorPalette(palette).gradient_2 +
         ColorPalette(palette).gradient_3
       }
     >
-      <div className="w-full h-screen bg-noise bg-repeat">{children}</div>
+      <div className="w-full h-full bg-noise bg-repeat overflow-hidden">
+        {children}
+      </div>
     </div>
   );
 };

@@ -10,6 +10,7 @@ import { AudioMain } from "./audio/AudioMain";
 import Visualizer from "./components/Visualizer";
 import { SequencerPreset1 } from "./Presets";
 import InstructionOverlay from "./components/InstructionOverlay";
+import SettingsMenu from "./components/SettingsMenu";
 
 interface props {
   num_steps: number;
@@ -27,7 +28,7 @@ const App = ({ num_steps, init_bpm, audio_main }: props) => {
         <BackgroundDiv palette={palette}>
           <p
             className={
-              "flex flex-col justify-center items-center h-screen text-center font-mono text-xl text-wrap" +
+              "flex flex-col justify-center items-center h-full text-center font-mono text-xl text-wrap" +
               ColorPalette(palette).text_1
             }
           >
@@ -63,6 +64,7 @@ const App = ({ num_steps, init_bpm, audio_main }: props) => {
   const [recording, setRecording] = useState(false);
   const [octave, setOctave] = useState(1);
   const [view_instructions, setViewInstructions] = useState(true);
+  const [view_settings_menu, setViewSettingsMenu] = useState(false);
 
   // update timer to check current step in sequencer
   useEffect(() => {
@@ -162,7 +164,7 @@ const App = ({ num_steps, init_bpm, audio_main }: props) => {
         <BackgroundDiv palette={palette}>
           <p
             className={
-              "flex flex-col w-full items-center justify-center h-screen text-center font-mono text-xl  text-wrap" +
+              "flex flex-col w-full items-center justify-center h-full text-center font-mono text-xl  text-wrap" +
               ColorPalette(palette).text_1
             }
           >
@@ -177,13 +179,19 @@ const App = ({ num_steps, init_bpm, audio_main }: props) => {
   return (
     <>
       <BackgroundDiv palette={palette}>
-        <div className="flex flex-col w-full h-screen items-center">
+        <div className="flex flex-col w-full h-full items-center overflow-hidden">
           <InstructionOverlay
             open={view_instructions}
             onClose={setViewInstructions}
             palette={palette}
           />
-          <div className="flex flex-col w-full h-screen px-20 pt-10 gap-10 max-w-screen-2xl overflow-hidden">
+          <SettingsMenu
+            isOpen={view_settings_menu}
+            onClose={setViewSettingsMenu}
+            palette={palette}
+            audio_main={audio_main}
+          />
+          <div className="flex flex-col w-full h-full px-20 pt-10 gap-10 max-w-screen-2xl overflow-hidden">
             <div className="flex flex-row justify-between items-end">
               <h1
                 className={
@@ -192,18 +200,32 @@ const App = ({ num_steps, init_bpm, audio_main }: props) => {
               >
                 SUBSTRATA
               </h1>
-              <button
-                className={
-                  "text-md h-max w-max rounded-xl border font-mono p-3" +
-                  ColorPalette(palette).text_1 +
-                  ColorPalette(palette).knob_border
-                }
-                onClick={() => {
-                  setViewInstructions(true);
-                }}
-              >
-                Instructions
-              </button>
+              <div className="flex flex-row gap-4">
+                <button
+                  className={
+                    "text-md h-max w-max rounded-xl border font-mono p-3" +
+                    ColorPalette(palette).text_1 +
+                    ColorPalette(palette).knob_border
+                  }
+                  onClick={() => {
+                    setViewInstructions(true);
+                  }}
+                >
+                  Instructions
+                </button>
+                <button
+                  className={
+                    "text-md h-max w-max rounded-xl border font-mono p-3" +
+                    ColorPalette(palette).text_1 +
+                    ColorPalette(palette).knob_border
+                  }
+                  onClick={() => {
+                    setViewSettingsMenu(true);
+                  }}
+                >
+                  Settings
+                </button>
+              </div>
             </div>
             <div className="grid grid-cols-8 h-auto gap-x-5 gap-y-10 w-full bg-transparent items-center">
               <div className="flex flex-col gap-4">
@@ -288,7 +310,7 @@ const App = ({ num_steps, init_bpm, audio_main }: props) => {
                 min_value={-30}
                 max_value={0}
                 name="Echo Lvl"
-                enabled={!audio_main.isUsingMidi()}
+                enabled={true}
                 onChange={(x: number) => {
                   delay_params.current.mix = x;
                   audio_main.setDelayParams(x, delay_params.current.fb);
@@ -302,7 +324,7 @@ const App = ({ num_steps, init_bpm, audio_main }: props) => {
                 min_value={-30}
                 max_value={-3}
                 name="Echo FB"
-                enabled={!audio_main.isUsingMidi()}
+                enabled={true}
                 onChange={(x: number) => {
                   delay_params.current.fb = x;
                   audio_main.setDelayParams(delay_params.current.mix, x);

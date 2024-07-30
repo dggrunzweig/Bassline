@@ -88,6 +88,71 @@ const TwoDButton = (props: props) => {
   const primary_pos = ConvertXYToPos(x, y, dimensions.w, dimensions.h);
   const secondary_pos = ConvertXYToPos(x_s, y_s, dimensions.w, dimensions.h);
 
+  const mouseDown = () => {
+    setClickStarted(true);
+  };
+
+  const mouseUp = () => {
+    if (!is_dragging.current) {
+      setToggle(!toggled);
+      props.Toggle(!toggled, props.step_index);
+    }
+    is_dragging.current = false;
+    setClickStarted(false);
+  };
+
+  const mouseLeave = () => {
+    is_dragging.current = false;
+    setClickStarted(false);
+  };
+
+  const mouseMove = (e: React.MouseEvent) => {
+    if (click_started) {
+      is_dragging.current = true;
+      const bounds = e.currentTarget.getBoundingClientRect();
+      const x = clamp(e.clientX - bounds.x, 0, bounds.width) / bounds.width;
+      const y =
+        1 - clamp(e.clientY - bounds.y, 0, bounds.height) / bounds.height;
+      const primary = !e.shiftKey;
+      if (primary) {
+        props.XDragPrimary(x, props.step_index);
+        props.YDragPrimary(y, props.step_index);
+        setXP(x);
+        setYP(y);
+      } else {
+        props.XDragSecondary(x, props.step_index);
+        props.YDragSecondary(y, props.step_index);
+        setXS(x);
+        setYS(y);
+      }
+    }
+  };
+
+  const touchMove = (e: React.TouchEvent) => {
+    if (click_started) {
+      is_dragging.current = true;
+      const bounds = e.currentTarget.getBoundingClientRect();
+      const x =
+        clamp(e.touches[0].clientX - bounds.x, 0, bounds.width) / bounds.width;
+      const y =
+        1 -
+        clamp(e.touches[0].clientY - bounds.y, 0, bounds.height) /
+          bounds.height;
+      const primary = !e.shiftKey;
+      if (primary) {
+        props.XDragPrimary(x, props.step_index);
+        props.YDragPrimary(y, props.step_index);
+        setXP(x);
+        setYP(y);
+      } else {
+        props.XDragSecondary(x, props.step_index);
+        props.YDragSecondary(y, props.step_index);
+        setXS(x);
+        setYS(y);
+      }
+    }
+  };
+
   const toggle_button = (
     <>
       <div
@@ -97,47 +162,18 @@ const TwoDButton = (props: props) => {
           button_outline +
           button_bg
         }
-        onMouseDown={() => {
-          setClickStarted(true);
-        }}
-        onMouseUp={() => {
-          if (!is_dragging.current) {
-            setToggle(!toggled);
-            props.Toggle(!toggled, props.step_index);
-          }
-          is_dragging.current = false;
-          setClickStarted(false);
-        }}
-        onMouseLeave={() => {
-          is_dragging.current = false;
-          setClickStarted(false);
-        }}
-        onMouseMove={(e) => {
-          if (click_started) {
-            is_dragging.current = true;
-            const bounds = e.currentTarget.getBoundingClientRect();
-            const x =
-              clamp(e.clientX - bounds.x, 0, bounds.width) / bounds.width;
-            const y =
-              1 - clamp(e.clientY - bounds.y, 0, bounds.height) / bounds.height;
-            const primary = !e.shiftKey;
-            if (primary) {
-              props.XDragPrimary(x, props.step_index);
-              props.YDragPrimary(y, props.step_index);
-              setXP(x);
-              setYP(y);
-            } else {
-              props.XDragSecondary(x, props.step_index);
-              props.YDragSecondary(y, props.step_index);
-              setXS(x);
-              setYS(y);
-            }
-          }
-        }}
+        onMouseDown={mouseDown}
+        onMouseUp={mouseUp}
+        onMouseLeave={mouseLeave}
+        onMouseMove={mouseMove}
+        onTouchStart={mouseDown}
+        onTouchEnd={mouseUp}
+        onTouchCancel={mouseLeave}
+        onTouchMove={touchMove}
       >
         {toggled && (
           <img
-            src="./src/assets/button_grid.svg"
+            src="./assets/button_grid.svg"
             className="object-fill w-full h-full select-none"
           />
         )}

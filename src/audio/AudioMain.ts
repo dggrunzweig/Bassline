@@ -1,5 +1,4 @@
-// import {GetTypeAndChannelFromData, ListMidiInputs, MidiInit,
-// SetDeviceInputEventListener} from './midi_utility';
+import {MidiInit, RemoveAllDeviceListeners, SetDeviceInputEventListener} from './midi_utility';
 import RecorderNode from './RecorderNode';
 import {BPMToTime, createAudioContext, createBiquadFilter, createCompressor, createDigitalDelay, createGain, createOscillator, db2mag, DigitalDelay, NoteToPitch} from './Utilities';
 
@@ -32,9 +31,12 @@ export class AudioMain {
   private record_steps = 0;
   private recording_node: RecorderNode;
   private setRecording: Function;
-  // private midi: MIDIAccess|undefined;
+  private midi: MIDIAccess|undefined;
   private using_midi = false;
-  // private clock_pulses = 0;
+  private clock_pulses = 0;
+  private midi_step_time = 0;
+  private midi_tempo = 120;
+  private root_note = 'G';
   constructor(num_steps: number, bpm: number) {
     console.log('Create Audio Main');
     this.ctx = createAudioContext();
@@ -76,54 +78,78 @@ export class AudioMain {
     this.waveform = this.ctx.createPeriodicWave(real, imag);
 
     // midi
-    // MidiInit().then((midi) => {
-    //   this.midi = midi;
-    //   const name = 'VirtualMidi Bus 1';
-    //   SetDeviceInputEventListener(this.midi, name, (data: number[]) => {
-    //     // look for clock signal only
-    //     const lower_half = data[0] & 0b00001111;
-    //     const upper_half = (data[0] & 0b11110000) >> 4;
-    //     if (upper_half == 15) {
-    //       // midi clock pulse, 24 per quarter note
-    //       if (lower_half == 8) {
-    //         this.using_midi = true;
-    //         if (this.running) {
-    //           if (this.clock_pulses == 0) {
-    //             if (this.steps[this.current_step] == 1) {
-    //               this.Trigger(
-    //                   this.ctx.currentTime + 0.01,
-    //                   this.velocity[this.current_step],
-    //                   this.decay[this.current_step],
-    //                   this.pitch_bend[this.current_step],
-    //                   this.tone[this.current_step], 60 / (120 * 4));
-    //             }
-    //             this.step_node.offset.setValueAtTime(
-    //                 this.current_step, this.ctx.currentTime);
-    //             this.current_step = (this.current_step + 1) %
-    //             this.total_steps;
-    //           }
-    //           this.clock_pulses = (this.clock_pulses + 1) %
-    //               6;  // 24 pulses per quarter note, 6 pulses = 16th
-    //         }
-    //       }
-    //       // start message
-    //       if (lower_half == 10) {
-    //         this.InitialStart();
-    //         clearInterval(this.sequence_timer);
-    //         this.running = true;
-    //         this.using_midi = true;
-    //         this.current_step = 0;
-    //         this.clock_pulses = 0;
-    //       }
-    //       // stop message
-    //       if (lower_half == 12) {
-    //         clearInterval(this.sequence_timer);
-    //         this.running = false;
-    //         this.using_midi = false;
-    //       }
-    //     }
-    //   });
-    // });
+    MidiInit().then((midi) => {
+      this.midi = midi;
+    });
+  }
+  public setMidiDevice(name: string) {
+    if (this.midi) {
+      RemoveAllDeviceListeners(this.midi);
+      if (name === 'None') {
+        this.using_midi = false;
+        return;
+      }
+      SetDeviceInputEventListener(this.midi, name, (data: number[]) => {
+        // look for clock signal only
+        this.ProcessMidiData(data);
+      });
+      clearInterval(this.sequence_timer);
+      this.running = false;
+      this.using_midi = true;
+    }
+  }
+  private ProcessMidiData(data: number[]) {
+    const lower_half = data[0] & 0b00001111;
+    const upper_half = (data[0] & 0b11110000) >> 4;
+    if (upper_half == 15) {
+      // midi clock pulse, 24 per quarter note
+      if (lower_half == 8) {
+        this.using_midi = true;
+        if (this.running) {
+          // 6 clock pulses == 16th note
+          if ((this.clock_pulses % 6) == 0) {
+            if (this.steps[this.current_step] == 1) {
+              this.Trigger(
+                  this.ctx.currentTime + 0.005,
+                  this.velocity[this.current_step],
+                  this.decay[this.current_step],
+                  this.pitch_bend[this.current_step],
+                  this.tone[this.current_step], 60 / (this.midi_tempo * 4));
+            }
+            this.step_node.offset.setValueAtTime(
+                this.current_step, this.ctx.currentTime);
+            this.current_step = (this.current_step + 1) % this.total_steps;
+          }
+          this.clock_pulses = (this.clock_pulses + 1) %
+              24;  // 24 pulses per quarter note, 6 pulses = 16th
+          if (this.clock_pulses == 0) {
+            const tempo_estimate =
+                60 / (this.ctx.currentTime - this.midi_step_time);
+            this.midi_tempo = Math.round(
+                this.midi_tempo + 0.5 * (tempo_estimate - this.midi_tempo));
+            this.delay.delay.delayTime.setTargetAtTime(
+                BPMToTime(this.midi_tempo, 3 / 8), this.ctx.currentTime, 0.1);
+            this.midi_step_time = this.ctx.currentTime;
+          }
+        }
+      }
+      // start message
+      if (lower_half == 10) {
+        this.InitialStart();
+        clearInterval(this.sequence_timer);
+        this.running = true;
+        this.using_midi = true;
+        this.current_step = 0;
+        this.clock_pulses = 0;
+        this.midi_step_time = this.ctx.currentTime;
+      }
+      // stop message
+      if (lower_half == 12) {
+        clearInterval(this.sequence_timer);
+        this.running = false;
+        this.using_midi = false;
+      }
+    }
   }
 
   private Trigger(
@@ -131,7 +157,7 @@ export class AudioMain {
       tone: number, step_dur: number) {
     if (!this.running) return;
     const ctx = this.ctx;
-    const root_hz = NoteToPitch('G', this.octave);
+    const root_hz = NoteToPitch(this.root_note, this.octave);
     const osc = createOscillator(
         ctx, 'sine', root_hz + 640 * pitch_bend * pitch_bend, 0);
     osc.setPeriodicWave(this.waveform);
@@ -211,6 +237,10 @@ export class AudioMain {
 
   public setOctave(octave: number) {
     this.octave = octave;
+  }
+
+  public setRootNote(note: string) {
+    this.root_note = note;
   }
 
   private step(current_time: number, step_duration: number): number {
@@ -297,6 +327,10 @@ export class AudioMain {
 
   public isUsingMidi() {
     return this.using_midi;
+  }
+
+  public getMidiAccess() {
+    return this.midi;
   }
 
   public RecordAudio(duration_steps: number, setRecording: Function) {

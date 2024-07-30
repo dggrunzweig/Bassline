@@ -2,16 +2,20 @@ export function MidiInit(): Promise<MIDIAccess> {
   return navigator.requestMIDIAccess();
 }
 
-export function ListMidiInputs(midi_access: MIDIAccess): void {
+export function ListMidiInputs(midi_access: MIDIAccess): string[] {
+  const names = new Array<string>();
   midi_access.inputs.forEach((input) => {
-    return console.log(input.name);
+    names.push(input.name ?? '');
   })
+  return names;
 }
 
-export function ListMidiOutputs(midi_access: MIDIAccess): void {
+export function ListMidiOutputs(midi_access: MIDIAccess): string[] {
+  const names = new Array<string>();
   midi_access.outputs.forEach((output) => {
-    return console.log(output.name);
+    names.push(output.name ?? '');
   })
+  return names;
 }
 
 export function SetDeviceInputEventListener(
@@ -31,6 +35,12 @@ export function SetDeviceInputEventListener(
     ListMidiInputs(midi_access);
   }
   return device_found;
+}
+
+export function RemoveAllDeviceListeners(midi_access: MIDIAccess) {
+  midi_access.inputs.forEach((input: MIDIInput) => {
+    input.onmidimessage = () => {};
+  });
 }
 
 
