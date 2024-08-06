@@ -328,7 +328,7 @@ export class AudioMain {
       clearInterval(this.sequence_timer);
       this.output_gain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.5);
       setTimeout(() => {
-        this.ctx.suspend();
+        if (!this.running) this.ctx.suspend();
       }, 1000);
     } else {
       this.current_step = 0;
