@@ -82,7 +82,7 @@ const SettingsMenu = ({ palette, isOpen, onClose, audio_main }: props) => {
             )}
           </div>
           <h1 className="text-2xl">Synth Settings</h1>
-          <div>
+          <div className="grid grid-flow-col grid-rows-2">
             <InlineComboBox
               title="Note"
               items={root_notes}
