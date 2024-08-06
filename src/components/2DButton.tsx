@@ -158,7 +158,7 @@ const TwoDButton = (props: props) => {
       <div
         ref={element_ref}
         className={
-          "flex flex-row h-full max-h-48 w-auto relative border-2 aspect-square rounded-lg " +
+          "flex flex-row h-full max-h-48 w-auto relative border-2 aspect-square rounded-lg select-none" +
           button_outline +
           button_bg
         }
@@ -175,6 +175,7 @@ const TwoDButton = (props: props) => {
           <img
             src="./assets/button_grid.svg"
             className="object-fill w-full h-full select-none"
+            draggable={false}
           />
         )}
         {toggled && (
