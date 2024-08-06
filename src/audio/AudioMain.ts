@@ -39,7 +39,6 @@ export class AudioMain {
   private midi_tempo = 120;
   private root_note = 'G';
   constructor(num_steps: number, bpm: number) {
-    console.log('Create Audio Main');
     this.ctx = createAudioContext();
     this.comp = createCompressor(this.ctx, -12, 4, 4, 0.02, 0.1);
     this.global_fm_level = createGain(this.ctx, 0.6);
@@ -274,7 +273,6 @@ export class AudioMain {
       if (this.should_record && this.current_step == 0 && !this.recording) {
         this.recording = true;
         this.recording_node.StartRecording();
-        console.log('Start Recording');
       }
 
       while (current_time < this.ctx.currentTime + step_duration) {
@@ -287,7 +285,6 @@ export class AudioMain {
           this.recording = false;
           this.should_record = false;
           this.recording_node.StopRecording();
-          console.log('Stop Recording');
           setTimeout(() => {
             if (this.recording_node.GetBlobURL() != null) {
               const link = document.createElement('a');
@@ -298,7 +295,6 @@ export class AudioMain {
                     'substrata' + this.recording_node.GetExtension();
                 link.innerHTML = '';
                 link.click();
-                console.log('Downloading Recording');
               }
               this.setRecording(false);
             }

@@ -8,6 +8,9 @@
 //     document.body.appendChild(link);
 //  }
 
+import {MediaRecorder, register} from 'extendable-media-recorder';
+import {connect} from 'extendable-media-recorder-wav-encoder';
+await register(await connect());
 class RecorderNode {
   private chunks: BlobPart[];
   private msd: MediaStreamAudioDestinationNode;
@@ -21,7 +24,9 @@ class RecorderNode {
     this.started = false;
     this.msd = context.createMediaStreamDestination();
     input_node.connect(this.msd);
-    this.media_recorder = new MediaRecorder(this.msd.stream);
+    // @ts-ignore
+    this.media_recorder =
+        new MediaRecorder(this.msd.stream, {mimeType: 'audio/wav'});
     this.blob_ready = false;
     this.blob_url = '';
 
@@ -31,12 +36,18 @@ class RecorderNode {
     };
     this.media_recorder.onstop = () => {
       let blob;
-      // true on Chrome and Opera
-      if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+      if (MediaRecorder.isTypeSupported('audio/wav')) {
+        // with extendable wave recorder
+        blob = new Blob(this.chunks, {type: 'audio/wav'});
+        this.extension = '.wav';
+      } else if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
+        // true on Chrome and Opera
         blob = new Blob(this.chunks, {type: 'audio/webm; codecs=opus'});
+        this.extension = '.webm';
       } else if (MediaRecorder.isTypeSupported('audio/ogg;codecs=opus')) {
         // true on Firefox
         blob = new Blob(this.chunks, {type: 'audio/ogg; codecs=opus'});
+        this.extension = '.webm';
       } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
         // true for safari
         blob = new Blob(this.chunks, {type: 'audio/mp4; codecs=aac'});
