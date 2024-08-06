@@ -10,7 +10,6 @@
 
 import {MediaRecorder, register} from 'extendable-media-recorder';
 import {connect} from 'extendable-media-recorder-wav-encoder';
-await register(await connect());
 class RecorderNode {
   private chunks: BlobPart[];
   private msd: MediaStreamAudioDestinationNode;
@@ -24,44 +23,51 @@ class RecorderNode {
     this.started = false;
     this.msd = context.createMediaStreamDestination();
     input_node.connect(this.msd);
-    // @ts-ignore
-    this.media_recorder =
-        new MediaRecorder(this.msd.stream, {mimeType: 'audio/wav'});
     this.blob_ready = false;
     this.blob_url = '';
-
-    // setup callbacks
-    this.media_recorder.ondataavailable = (evt: BlobEvent) => {
-      this.chunks.push(evt.data);
-    };
-    this.media_recorder.onstop = () => {
-      let blob;
-      if (MediaRecorder.isTypeSupported('audio/wav')) {
-        // with extendable wave recorder
-        blob = new Blob(this.chunks, {type: 'audio/wav'});
-        this.extension = '.wav';
-      } else if (MediaRecorder.isTypeSupported('audio/webm;codecs=opus')) {
-        // true on Chrome and Opera
-        blob = new Blob(this.chunks, {type: 'audio/webm; codecs=opus'});
-        this.extension = '.webm';
-      } else if (MediaRecorder.isTypeSupported('audio/ogg;codecs=opus')) {
-        // true on Firefox
-        blob = new Blob(this.chunks, {type: 'audio/ogg; codecs=opus'});
-        this.extension = '.webm';
-      } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
-        // true for safari
-        blob = new Blob(this.chunks, {type: 'audio/mp4; codecs=aac'});
-        this.extension = '.mp4';
-      } else {
-        // can't save, no supported formats
-        console.log('RecorderNode: No supported formats for saving!');
-        return;
-      }
-
-      this.blob_url = URL.createObjectURL(blob);
-      this.blob_ready = true;
-    }
+    // create generic media recorder
+    // @ts-ignore
+    this.media_recorder = new MediaRecorder(this.msd.stream);
+    // register and create extendable media recorder with wave format
+    connect().then(
+        (msg_port) => {register(msg_port).then(() => {
+          // @ts-ignore
+          this.media_recorder =
+              new MediaRecorder(this.msd.stream, {mimeType: 'audio/wav'});
+          // setup callbacks
+          this.media_recorder.ondataavailable = (evt: BlobEvent) => {
+            this.chunks.push(evt.data);
+          };
+          this.media_recorder.onstop = () => {
+            let blob;
+            if (MediaRecorder.isTypeSupported('audio/wav')) {
+              // with extendable wave recorder
+              blob = new Blob(this.chunks, {type: 'audio/wav'});
+              this.extension = '.wav';
+            } else if (MediaRecorder.isTypeSupported(
+                           'audio/webm;codecs=opus')) {
+              // true on Chrome and Opera
+              blob = new Blob(this.chunks, {type: 'audio/webm; codecs=opus'});
+              this.extension = '.webm';
+            } else if (MediaRecorder.isTypeSupported('audio/ogg;codecs=opus')) {
+              // true on Firefox
+              blob = new Blob(this.chunks, {type: 'audio/ogg; codecs=opus'});
+              this.extension = '.webm';
+            } else if (MediaRecorder.isTypeSupported('audio/mp4')) {
+              // true for safari
+              blob = new Blob(this.chunks, {type: 'audio/mp4; codecs=aac'});
+              this.extension = '.mp4';
+            } else {
+              // can't save, no supported formats
+              console.log('RecorderNode: No supported formats for saving!');
+              return;
+            }
+            this.blob_url = URL.createObjectURL(blob);
+            this.blob_ready = true;
+          }
+        })});
   }
+
   StartRecording() {
     this.media_recorder.start();
     this.started = true;
