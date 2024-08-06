@@ -181,8 +181,12 @@ export class AudioMain {
     vca.gain.setTargetAtTime(0, at_time + 0.01, 2 * decay * step_dur);
 
     setTimeout(() => {
+      vca.gain.setValueAtTime(0, ctx.currentTime);
       osc.stop();
+      fm_osc.stop();
       osc.disconnect();
+      fm_osc.disconnect();
+      fm_gain.disconnect();
       vca.disconnect();
     }, (at_time - cur_time) * 1000 + 2000);
   }
