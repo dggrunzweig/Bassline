@@ -7,7 +7,8 @@ export class AudioMain {
   private comp: DynamicsCompressorNode;
   private global_fm_level: GainNode;
   private global_fm_osc: OscillatorNode;
-  private out_gain: GainNode;
+  private synth_gain: GainNode;
+  private output_gain: GainNode;
   private waveform: PeriodicWave;
   private running = false;
   private started = false;
@@ -44,7 +45,8 @@ export class AudioMain {
     this.global_fm_level = createGain(this.ctx, 0.6);
     this.global_fm_osc = createOscillator(this.ctx, 'triangle', 100, 0);
     this.hp = createBiquadFilter(this.ctx, 'highpass', 20, 4.0, 0);
-    this.out_gain = createGain(this.ctx, db2mag(-6));
+    this.synth_gain = createGain(this.ctx, db2mag(-6));
+    this.output_gain = createGain(this.ctx, 0);
     this.delay = createDigitalDelay(this.ctx, BPMToTime(bpm, 3 / 8), -6);
     const delay_filter = createBiquadFilter(this.ctx, 'highpass', 400, 2.0, 0.);
     this.delay.output.gain.setValueAtTime(0, 0);
@@ -54,10 +56,12 @@ export class AudioMain {
     this.step_node.connect(this.step_analyzer);
 
     // end chain
-    this.out_gain.connect(this.hp).connect(this.comp).connect(
-        this.ctx.destination);
+    this.synth_gain.connect(this.hp)
+        .connect(this.comp)
+        .connect(this.output_gain)
+        .connect(this.ctx.destination);
     this.comp.connect(this.analyzer);
-    this.out_gain.connect(delay_filter).connect(this.delay.input);
+    this.synth_gain.connect(delay_filter).connect(this.delay.input);
     this.delay.output.connect(this.comp);
     this.global_fm_osc.connect(this.global_fm_level);
 
@@ -175,7 +179,7 @@ export class AudioMain {
     fm_osc.start();
     osc.start();
     const vca = createGain(ctx, 0);
-    osc.connect(vca).connect(this.out_gain);
+    osc.connect(vca).connect(this.synth_gain);
 
     vca.gain.setTargetAtTime(db2mag(-12 * (1 - velocity)), at_time, 0.0001);
     vca.gain.setTargetAtTime(0, at_time + 0.01, 2 * decay * step_dur);
@@ -322,9 +326,14 @@ export class AudioMain {
     this.running = !this.running;
     if (!this.running) {
       clearInterval(this.sequence_timer);
+      this.output_gain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.5);
+      setTimeout(() => {
+        this.ctx.suspend();
+      }, 1000);
     } else {
       this.current_step = 0;
       this.Sequence();
+      this.output_gain.gain.setTargetAtTime(1, this.ctx.currentTime, 0.1);
     }
   }
 
