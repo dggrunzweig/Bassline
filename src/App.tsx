@@ -68,9 +68,19 @@ const App = ({ num_steps, init_bpm, audio_main }: props) => {
 
   // update timer to check current step in sequencer
   useEffect(() => {
-    setInterval(() => {
-      setCurrentStep(audio_main.GetCurrentStep());
-    }, 100);
+    let request_id = 0;
+    const UpdateStep = () => {
+      // only redraw when necessary
+      if (audio_main.GetCurrentStep() != current_step) {
+        setCurrentStep(audio_main.GetCurrentStep());
+      }
+      request_id = window.requestAnimationFrame(UpdateStep);
+    };
+    UpdateStep();
+
+    return () => {
+      window.cancelAnimationFrame(request_id);
+    };
   });
 
   // Should we fill in the machine with a basic preset when the page is opened
