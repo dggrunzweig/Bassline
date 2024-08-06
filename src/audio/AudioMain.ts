@@ -1,4 +1,4 @@
-import {MidiInit, RemoveAllDeviceListeners, SetDeviceInputEventListener} from './midi_utility';
+import {BrowserSupportsMIDI, MidiInit, RemoveAllDeviceListeners, SetDeviceInputEventListener} from './midi_utility';
 import RecorderNode from './RecorderNode';
 import {BPMToTime, createAudioContext, createBiquadFilter, createCompressor, createDigitalDelay, createGain, createOscillator, db2mag, DigitalDelay, NoteToPitch} from './Utilities';
 
@@ -28,9 +28,10 @@ export class AudioMain {
   private step_analyzer: AnalyserNode;
   private should_record = false;
   private recording = false;
-  private record_steps = 0;
+  private record_steps = 64;
   private recording_node: RecorderNode;
   private setRecording: Function;
+  private midi_supported = false;
   private midi: MIDIAccess|undefined;
   private using_midi = false;
   private clock_pulses = 0;
@@ -78,11 +79,15 @@ export class AudioMain {
     this.waveform = this.ctx.createPeriodicWave(real, imag);
 
     // midi
-    MidiInit().then((midi) => {
-      this.midi = midi;
-    });
+    this.midi_supported = BrowserSupportsMIDI();
+    if (this.midi_step_time) {
+      MidiInit().then((midi) => {
+        this.midi = midi;
+      });
+    }
   }
   public setMidiDevice(name: string) {
+    if (!this.midi_supported) return;
     if (this.midi) {
       RemoveAllDeviceListeners(this.midi);
       if (name === 'None') {
@@ -99,6 +104,7 @@ export class AudioMain {
     }
   }
   private ProcessMidiData(data: number[]) {
+    if (!this.midi_supported) return;
     const lower_half = data[0] & 0b00001111;
     const upper_half = (data[0] & 0b11110000) >> 4;
     if (upper_half == 15) {
@@ -110,8 +116,7 @@ export class AudioMain {
           if ((this.clock_pulses % 6) == 0) {
             if (this.steps[this.current_step] == 1) {
               this.Trigger(
-                  this.ctx.currentTime + 0.005,
-                  this.velocity[this.current_step],
+                  this.ctx.currentTime, this.velocity[this.current_step],
                   this.decay[this.current_step],
                   this.pitch_bend[this.current_step],
                   this.tone[this.current_step], 60 / (this.midi_tempo * 4));
@@ -157,6 +162,8 @@ export class AudioMain {
       tone: number, step_dur: number) {
     if (!this.running) return;
     const ctx = this.ctx;
+    const cur_time = ctx.currentTime;
+    at_time = Math.max(cur_time + 0.01, at_time);
     const root_hz = NoteToPitch(this.root_note, this.octave);
     const osc = createOscillator(
         ctx, 'sine', root_hz + 640 * pitch_bend * pitch_bend, 0);
@@ -178,7 +185,7 @@ export class AudioMain {
       osc.stop();
       osc.disconnect();
       vca.disconnect();
-    }, (at_time - ctx.currentTime) * 1000 + 2000);
+    }, (at_time - cur_time) * 1000 + 2000);
   }
 
   public GetCurrentStep() {
@@ -330,12 +337,16 @@ export class AudioMain {
   }
 
   public getMidiAccess() {
+    if (!this.midi_supported) return undefined;
     return this.midi;
   }
 
-  public RecordAudio(duration_steps: number, setRecording: Function) {
+  public SetRecordDuration(duration: number) {
+    this.record_steps = duration * 16;
+  }
+
+  public RecordAudio(setRecording: Function) {
     this.should_record = true;
-    this.record_steps = duration_steps;
     this.setRecording = setRecording;
     setRecording(true);
   }

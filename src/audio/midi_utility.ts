@@ -1,3 +1,7 @@
+export function BrowserSupportsMIDI(): boolean {
+  return (navigator.requestMIDIAccess != undefined);
+}
+
 export function MidiInit(): Promise<MIDIAccess> {
   return navigator.requestMIDIAccess();
 }

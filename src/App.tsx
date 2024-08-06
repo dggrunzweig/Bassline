@@ -179,7 +179,7 @@ const App = ({ num_steps, init_bpm, audio_main }: props) => {
   return (
     <>
       <BackgroundDiv palette={palette}>
-        <div className="flex flex-col w-full h-full items-center overflow-hidden">
+        <div className="flex flex-col w-full h-full items-center overflow-hidden select-none">
           <InstructionOverlay
             open={view_instructions}
             onClose={setViewInstructions}
@@ -254,7 +254,7 @@ const App = ({ num_steps, init_bpm, audio_main }: props) => {
                     ColorPalette(palette).knob_border
                   }
                   onClick={() => {
-                    audio_main.RecordAudio(32, setRecording);
+                    audio_main.RecordAudio(setRecording);
                   }}
                   disabled={recording}
                 >

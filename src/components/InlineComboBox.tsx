@@ -18,7 +18,7 @@ const InlineComboBox = ({
   onSelectItem,
 }: props) => {
   return (
-    <div className="flex flex-row gap-4 h-auto items-center font-mono text-sm ">
+    <div className="flex flex-row gap-4 h-auto items-center font-mono text-sm select-none">
       {title}
       <div
         className={
