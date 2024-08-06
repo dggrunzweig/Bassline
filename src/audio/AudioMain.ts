@@ -79,7 +79,7 @@ export class AudioMain {
 
     // midi
     this.midi_supported = BrowserSupportsMIDI();
-    if (this.midi_step_time) {
+    if (this.midi_supported) {
       MidiInit().then((midi) => {
         this.midi = midi;
       });
