@@ -42,6 +42,7 @@ export class AudioMain {
   }
   public setMidiDevice(name: string) {
     if (!this.midi_supported) return;
+    this.Stop();
     if (this.midi) {
       RemoveAllDeviceListeners(this.midi);
       if (name === 'None') {
@@ -58,7 +59,6 @@ export class AudioMain {
     }
   }
   private ProcessMidiData(data: number[]) {
-    console.log(data);
     if (!this.midi_supported || !this.using_midi) return;
     const lower_half = data[0] & 0b00001111;
     const upper_half = (data[0] & 0b11110000) >> 4;
@@ -68,11 +68,6 @@ export class AudioMain {
         if (this.synth_engine_.isRunning()) {
           // increment the sequencer, expects 24 Pulses Per Quarter Note
           this.synth_engine_.MIDIClick();
-          console.log('Click');
-          // 6 clock pulses == 16th note
-          if ((this.clock_pulses % 6) == 0) {
-            this.Record();
-          }
           this.clock_pulses = (this.clock_pulses + 1) %
               24;  // 24 pulses per quarter note, 6 pulses = 16th
           if (this.clock_pulses == 0) {

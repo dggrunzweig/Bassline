@@ -30,15 +30,12 @@ void KickSynth::Process(uintptr_t output_ptr, unsigned num_frames,
     float x = 0;
     for (unsigned i = 0; i < num_frames; ++i) {
       // check if it should trigger a new step
-      bool should_trig = false;
-      if (use_midi_)
-        should_trig = midi_ticks_ >= 6;
-      else
-        should_trig = t_ - t_last_ > step_duration_;
+      bool should_trig =
+          use_midi_ ? (midi_ticks_ >= 6) : (t_ - t_last_ > step_duration_);
       if (should_trig) {
+        midi_ticks_ = 0;
         if (trigger_[step_] == 1) {
           t_ = 0;
-          midi_ticks_ = 0;
           t_trig_ = t_;
           f_ = frequency_[step_];
           // convert velocity to db scale

@@ -16,11 +16,9 @@ class AudioEngineWorklet extends AudioWorkletProcessor {
       switch (msg_data.type) {
         case KickSynthMessageType.start:
           this.synth.Start();
-          console.log('Start');
           break;
         case KickSynthMessageType.stop:
           this.synth.Stop();
-          console.log('Stop');
           break;
         case KickSynthMessageType.get_step:
           this.port.postMessage({
