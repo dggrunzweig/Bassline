@@ -30,15 +30,20 @@ class KickSynth {
   void SetTone(float t, int step);
   void SetGlobalFM(float level_dB, float rate);
   void SetSequenceLength(int steps);
+  void UseMIDI(bool use_midi);
+  void MIDIClockPulse();
+  void MIDIClockReset();
 
  private:
   Oscillator main_osc_;
   Oscillator tone_osc_;
   Oscillator fm_osc_;
   bool running_ = false;
+  bool use_midi_ = false;
   float v_env_ = 0;
   float p_env_ = 0;
   float t_ = 0;
+  unsigned int midi_ticks_ = 0;
   float t_trig_ = 0;
   float t_last_ = 0;
   unsigned int fs_;
@@ -87,5 +92,8 @@ EMSCRIPTEN_BINDINGS(CLASS_KickSynth) {
       .function("SetBend", &KickSynth::SetBend)
       .function("SetTone", &KickSynth::SetTone)
       .function("SetGlobalFM", &KickSynth::SetGlobalFM)
-      .function("SetSequenceLength", &KickSynth::SetSequenceLength);
+      .function("SetSequenceLength", &KickSynth::SetSequenceLength)
+      .function("UseMIDI", &KickSynth::UseMIDI)
+      .function("MIDIClockPulse", &KickSynth::MIDIClockPulse)
+      .function("MIDIClockReset", &KickSynth::MIDIClockReset);
 }

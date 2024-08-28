@@ -30,9 +30,15 @@ void KickSynth::Process(uintptr_t output_ptr, unsigned num_frames,
     float x = 0;
     for (unsigned i = 0; i < num_frames; ++i) {
       // check if it should trigger a new step
-      if (t_ - t_last_ > step_duration_) {
+      bool should_trig = false;
+      if (use_midi_)
+        should_trig = midi_ticks_ >= 6;
+      else
+        should_trig = t_ - t_last_ > step_duration_;
+      if (should_trig) {
         if (trigger_[step_] == 1) {
           t_ = 0;
+          midi_ticks_ = 0;
           t_trig_ = t_;
           f_ = frequency_[step_];
           // convert velocity to db scale
@@ -118,32 +124,38 @@ void KickSynth::SetTrig(bool on, int step) {
   assert(step >= 0 && step < kMaxSteps);
   trigger_[step] = on;
 }
+
 void KickSynth::SetFrequency(float f, int step) {
   assert(step >= 0 && step < kMaxSteps);
   assert(f >= 20 && f <= 5000 &&
          "Frequency invalid, must be between 20 and 5000");
   frequency_[step] = audio_utils::clamp(f, 20, 5000);
 }
+
 void KickSynth::SetVelocity(float v, int step) {
   assert(step >= 0 && step < kMaxSteps);
   assert(v >= 0 && v <= 1 && "Velocity invalid, must be between 0 and 1");
   velocity_[step] = audio_utils::clamp(v, 0, 1);
 }
+
 void KickSynth::SetDuration(float d, int step) {
   assert(step >= 0 && step < kMaxSteps);
   assert(d >= 0 && d <= 4 && "Duration invalid, must be between 0 and 4");
   duration_[step] = audio_utils::clamp(d, 0.0001, 4);
 }
+
 void KickSynth::SetBend(float b, int step) {
   assert(step >= 0 && step < kMaxSteps);
   assert(b >= 0 && b <= 1 && "Bend Invalid, must be between 0 and 1");
   bend_[step] = audio_utils::clamp(b, 0, 1);
 }
+
 void KickSynth::SetTone(float t, int step) {
   assert(step >= 0 && step < kMaxSteps);
   assert(t >= 0 && t <= 1 && "Tone Invalid, must be between 0 and 1");
   tone_[step] = audio_utils::clamp(t, 0, 1);
 }
+
 void KickSynth::SetGlobalFM(float level_dB, float rate) {
   assert(rate >= 0 && rate <= 10000 &&
          "FM Rate Invalid, must be between 0Hz and 10KHz");
@@ -154,8 +166,15 @@ void KickSynth::SetGlobalFM(float level_dB, float rate) {
   fm_rate_.setValueInterpolate(audio_utils::clamp(rate, 0.0001, 10000),
                                kFramesPerBuffer);
 }
+
 void KickSynth::SetSequenceLength(int steps) {
   assert(steps <= kMaxSteps && steps > 0 &&
          "Invalid number of steps, must be between 1 and max allowable steps");
   seq_length_ = steps;
 }
+
+void KickSynth::UseMIDI(bool use_midi) { use_midi_ = use_midi; }
+
+void KickSynth::MIDIClockPulse() { midi_ticks_++; }
+
+void KickSynth::MIDIClockReset() { midi_ticks_ = 0; }

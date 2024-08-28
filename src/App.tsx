@@ -94,67 +94,68 @@ const App = ({ num_steps, init_bpm, audio_main }: props) => {
   if (use_preset) {
     velocity.current = SequencerPreset1.Volume;
   } else velocity.current = new Array<number>(num_steps).fill(vel_init);
-  audio_main.setVelocity(velocity.current);
 
   const decay_init = 0.2;
   const decay = useRef(new Array<number>(num_steps).fill(decay_init));
   if (use_preset) {
     decay.current = SequencerPreset1.Decay;
   } else decay.current = new Array<number>(num_steps).fill(decay_init);
-  audio_main.setDecay(decay.current);
 
   const pb_init = 0.2;
   const pitch_bend = useRef(new Array<number>(num_steps).fill(pb_init));
   if (use_preset) {
     pitch_bend.current = SequencerPreset1.PitchBend;
   } else pitch_bend.current = new Array<number>(num_steps).fill(pb_init);
-  audio_main.setPitchBend(pitch_bend.current);
 
   const tone_init = 0.1;
   const tone = useRef(new Array<number>(num_steps).fill(tone_init));
   if (use_preset) {
     tone.current = SequencerPreset1.Tone;
   } else tone.current = new Array<number>(num_steps).fill(tone_init);
-  audio_main.setTone(tone.current);
 
-  const steps = useRef(new Array<number>(num_steps).fill(0));
+  const steps = useRef(new Array<boolean>(num_steps).fill(false));
   if (use_preset) {
     steps.current = SequencerPreset1.Steps;
-  } else steps.current = new Array<number>(num_steps).fill(0);
-  audio_main.SetSteps(steps.current);
+  } else steps.current = new Array<boolean>(num_steps).fill(false);
+
+  // initial setting
+  for (let i = 0; i < num_steps; ++i) {
+    audio_main.setVelocity(velocity.current[i], i);
+    audio_main.setDecay(decay.current[i], i);
+    audio_main.setPitchBend(pitch_bend.current[i], i);
+    audio_main.setTone(tone.current[i], i);
+    audio_main.SetTrigger(steps.current[i], i);
+  }
 
   // Per step setter functions for 2D Button
   const Toggle = (on: boolean, step_index: number) => {
-    steps.current[step_index] = on ? 1 : 0;
-    audio_main.SetSteps(steps.current);
+    steps.current[step_index] = on;
+    audio_main.SetTrigger(on, step_index);
   };
   const xDragPrimary = (x: number, step_index: number) => {
     decay.current[step_index] = x;
-    audio_main.setDecay(decay.current);
+    audio_main.setDecay(x, step_index);
   };
   const yDragPrimary = (y: number, step_index: number) => {
     velocity.current[step_index] = y;
-    audio_main.setVelocity(velocity.current);
+    audio_main.setVelocity(y, step_index);
   };
   const xDragSecondary = (x: number, step_index: number) => {
     tone.current[step_index] = x;
-    audio_main.setTone(tone.current);
+    audio_main.setTone(x, step_index);
   };
   const yDragSecondary = (y: number, step_index: number) => {
     pitch_bend.current[step_index] = y;
-    audio_main.setPitchBend(pitch_bend.current);
+    audio_main.setPitchBend(y, step_index);
   };
 
   // Knob Parameters
   // ring mod
   const fm_params = useRef({
     frequency: 100,
-    range: 0,
+    range: -24,
   });
-  audio_main.SetRingModParams(
-    fm_params.current.frequency,
-    fm_params.current.range
-  );
+  audio_main.SetGlobalFM(fm_params.current.frequency, fm_params.current.range);
 
   // delay
   const delay_params = useRef({
@@ -295,21 +296,21 @@ const App = ({ num_steps, init_bpm, audio_main }: props) => {
                 enabled={true}
                 onChange={(x: number) => {
                   fm_params.current.frequency = x;
-                  audio_main.SetRingModParams(x, fm_params.current.range);
+                  audio_main.SetGlobalFM(x, fm_params.current.range);
                 }}
                 palette={palette}
               />
               <Knob
                 key="1002"
                 init_value={fm_params.current.range}
-                units="Hz"
-                min_value={0}
-                max_value={1000}
+                units="dB"
+                min_value={-24}
+                max_value={24}
                 name="FM Lvl"
                 enabled={true}
                 onChange={(x: number) => {
                   fm_params.current.range = x;
-                  audio_main.SetRingModParams(fm_params.current.frequency, x);
+                  audio_main.SetGlobalFM(fm_params.current.frequency, x);
                 }}
                 palette={palette}
               />
@@ -372,7 +373,7 @@ const App = ({ num_steps, init_bpm, audio_main }: props) => {
                       y_p_init={velocity.current[i]}
                       x_s_init={tone.current[i]}
                       y_s_init={pitch_bend.current[i]}
-                      toggle_init={steps.current[i] == 1}
+                      toggle_init={steps.current[i]}
                       palette={palette}
                     />
                   </div>
