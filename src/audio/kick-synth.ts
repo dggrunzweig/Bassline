@@ -70,7 +70,8 @@ class KickSynth {
     this.delay.output.connect(this.comp);
 
     // Create a worklet to handle process calls
-    audio_ctx.audioWorklet.addModule('./src/audio/audio-engine-worklet.ts')
+    const worklet_url = new URL('audio-engine-worklet.ts', import.meta.url);
+    audio_ctx.audioWorklet.addModule(worklet_url)
         .then(() => {
           console.log('Creating worklet');
           // pass in the WASM synth engine as a parameter

@@ -1,3 +1,4 @@
+// @ts-ignore
 import Module from './kick-synth-WASM'
 import {KickSynthMessageType, KickSynthPortMessage} from './kick-synth.js';
 import HeapAudioBuffer from './wasm-audio-helper.js'
@@ -92,9 +93,10 @@ class AudioEngineWorklet extends AudioWorkletProcessor {
       };
     };
   }
+
   public process(
-      inputs: Float32Array[][], outputs: Float32Array[][],
-      parameters: Record<string, Float32Array>): boolean {
+      _: Float32Array[][], outputs: Float32Array[][],
+      _1: Record<string, Float32Array>): boolean {
     const output = outputs[0];
 
     // For this given render quantum, the channel count of the node is fixed

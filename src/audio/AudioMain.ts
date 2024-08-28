@@ -6,7 +6,6 @@ export class AudioMain {
   private ctx: AudioContext;
   private synth_engine_: KickSynth;
   private sequence_length_ = 0;
-  private bpm = 0;
   private octave = 2;
   private root_note = 'G';
   private record_loops_ = 4;
@@ -18,7 +17,6 @@ export class AudioMain {
   private midi_tempo = 120;
   constructor(num_steps: number, bpm: number) {
     this.ctx = createAudioContext();
-    this.bpm = bpm;
     this.sequence_length_ = num_steps;
     this.synth_engine_ = new KickSynth(this.ctx, num_steps, bpm);
 
@@ -115,7 +113,6 @@ export class AudioMain {
   }
 
   public setBPM(bpm: number) {
-    this.bpm = bpm;
     this.synth_engine_.SetBPM(bpm);
   }
 

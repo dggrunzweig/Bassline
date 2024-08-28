@@ -21,8 +21,3 @@ For Testing
 `cd WASM`
 `make test-build`
 `make test-run`
-
-To build simplified test site
-
-`npm run update`
-`npm run dev`
