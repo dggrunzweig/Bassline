@@ -6,6 +6,7 @@
 #include "audio_utils.hpp"
 #include "oscillator.hpp"
 #include "parameter.hpp"
+#include "wav.hpp"
 
 using namespace emscripten;
 
@@ -14,7 +15,7 @@ constexpr int kMaxSteps = 16;
 class KickSynth {
  public:
   KickSynth(unsigned int sample_rate);
-  ~KickSynth() = default;
+  ~KickSynth();
 
   void Process(uintptr_t output_ptr, unsigned num_frames,
                unsigned num_channels);
@@ -33,8 +34,17 @@ class KickSynth {
   void UseMIDI(bool use_midi);
   void MIDIClockPulse();
   void MIDIClockReset();
+  void RecordAudio(unsigned int num_sequence_loops);
+  bool RecordFinished() { return record_finished_; };
+  int GetRecordBufferSize() { return buffer_len_; };
+  uintptr_t GetRecordBuffer() { return uintptr_t(&record_buffer_[0]); }
+  uintptr_t GetRecordBufferAsWav();
+  int GetWavSizeInBytes();
 
  private:
+  void PushBufferToRecordBuffer(float* buffer, int buffer_len, int offset,
+                                int frames_to_copy);
+
   Oscillator main_osc_;
   Oscillator tone_osc_;
   Oscillator fm_osc_;
@@ -58,9 +68,23 @@ class KickSynth {
   float duration_[kMaxSteps];
   float bend_[kMaxSteps];
   float tone_[kMaxSteps];
+
   // Global FM
   FloatParameter fm_level_;
   FloatParameter fm_rate_;
+
+  // recording buffer
+  unsigned int remaining_frames_ = 0;
+  unsigned int buffer_len_ = 0;
+  unsigned int buffer_offset_ = 0;
+  bool record_ready_ = false;
+  bool record_begin_ = false;
+  bool record_finished_ = false;
+  float* record_buffer_ = nullptr;
+  WAVWriter wav_writer_;
+
+  // buffers
+  float* output_buffer_ = nullptr;
 
   // current step settings
   float f_ = 0;
@@ -79,7 +103,7 @@ class KickSynth {
 
 EMSCRIPTEN_BINDINGS(CLASS_KickSynth) {
   class_<KickSynth>("KickSynth")
-      .constructor<float>()
+      .constructor<unsigned int>()
       .function("Process", &KickSynth::Process, allow_raw_pointers())
       .function("Start", &KickSynth::Start)
       .function("Stop", &KickSynth::Stop)
@@ -95,5 +119,13 @@ EMSCRIPTEN_BINDINGS(CLASS_KickSynth) {
       .function("SetSequenceLength", &KickSynth::SetSequenceLength)
       .function("UseMIDI", &KickSynth::UseMIDI)
       .function("MIDIClockPulse", &KickSynth::MIDIClockPulse)
-      .function("MIDIClockReset", &KickSynth::MIDIClockReset);
+      .function("MIDIClockReset", &KickSynth::MIDIClockReset)
+      .function("RecordAudio", &KickSynth::RecordAudio)
+      .function("RecordFinished", &KickSynth::RecordFinished)
+      .function("GetRecordBufferSize", &KickSynth::GetRecordBufferSize)
+      .function("GetRecordBuffer", &KickSynth::GetRecordBuffer,
+                allow_raw_pointers())
+      .function("GetRecordBufferAsWav", &KickSynth::GetRecordBufferAsWav,
+                allow_raw_pointers())
+      .function("GetWavSizeInBytes", &KickSynth::GetWavSizeInBytes);
 }

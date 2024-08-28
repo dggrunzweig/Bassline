@@ -1,7 +1,6 @@
 import KickSynth from './kick-synth';
 import {BrowserSupportsMIDI, MidiInit, RemoveAllDeviceListeners, SetDeviceInputEventListener} from './midi_utility';
-import RecorderNode from './RecorderNode';
-import {createAudioContext, NoteToPitch} from './Utilities';
+import {clamp, createAudioContext, NoteToPitch} from './Utilities';
 
 export class AudioMain {
   private ctx: AudioContext;
@@ -10,13 +9,7 @@ export class AudioMain {
   private bpm = 0;
   private octave = 2;
   private root_note = 'G';
-
-  // private should_record = false;
-  // private recording = false;
-  // private record_steps = 64;
-  // private record_duration = 64;
-  // private recording_node: RecorderNode;
-  // private setRecording: Function;
+  private record_loops_ = 4;
   private midi_supported = false;
   private midi: MIDIAccess|undefined;
   private using_midi = false;
@@ -28,9 +21,6 @@ export class AudioMain {
     this.bpm = bpm;
     this.sequence_length_ = num_steps;
     this.synth_engine_ = new KickSynth(this.ctx, num_steps, bpm);
-
-    // this.recording_node = new RecorderNode(this.ctx, this.comp);
-    // this.setRecording = () => {};
 
     // midi
     this.midi_supported = BrowserSupportsMIDI();
@@ -153,41 +143,6 @@ export class AudioMain {
     }
   }
 
-  private Record() {
-    console.log('RECORDING NOT AVAILABLE');
-    // // fired once when the recording is requested
-    // if (this.should_record && this.current_step == 0 && !this.recording) {
-    //   this.recording = true;
-    //   this.recording_node.StartRecording();
-    //   this.record_steps = this.record_duration;
-    // }
-
-    // // while Recording
-    // if (this.recording) {
-    //   if (this.record_steps <= 0) {
-    //     // stop recording
-    //     this.recording = false;
-    //     this.should_record = false;
-    //     this.recording_node.StopRecording();
-    //     setTimeout(() => {
-    //       if (this.recording_node.GetBlobURL() != null) {
-    //         const link = document.createElement('a');
-    //         const blob = this.recording_node.GetBlobURL();
-    //         if (blob) {
-    //           link.href = blob;
-    //           link.download = 'substrata' +
-    //           this.recording_node.GetExtension(); link.innerHTML = '';
-    //           link.click();
-    //         }
-    //         this.setRecording(false);
-    //       }
-    //     }, 2000);
-    //   }
-    //   this.record_steps--;
-    // }
-  }
-
-
   private Start() {
     this.synth_engine_.Start();
     if (this.using_midi) {
@@ -228,15 +183,20 @@ export class AudioMain {
     if (!this.midi_supported) return undefined;
     return this.midi;
   }
-
-  public SetRecordDuration(duration_measures: number) {
-    // this.record_duration = duration_measures * 16;
+  public SetRecordDuration(num_sequence_loops: number) {
+    this.record_loops_ = clamp(num_sequence_loops, 4, 16);
   }
-
   public RecordAudio(setRecording: Function) {
-    console.log('RECORDING NOT AVAILABLE');
-    // this.should_record = true;
-    // this.setRecording = setRecording;
-    // setRecording(true);
+    this.synth_engine_.StartRecord(this.record_loops_);
+    setRecording(true);
+
+    let id = setInterval(() => {
+      if (this.synth_engine_.FinishedRecording()) {
+        setRecording(false);
+        clearInterval(id);
+        // request data
+        this.synth_engine_.GetRecordBuffer();
+      }
+    }, 500);
   }
 }

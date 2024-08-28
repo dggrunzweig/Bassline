@@ -17,6 +17,9 @@ export enum KickSynthMessageType {
   use_midi = 'USE_MIDI',
   midi_time_pulse = 'MIDI_TIME_PULSE',
   midi_clock_reset = 'MIDI_CLOCK_RESET',
+  record = 'RECORD',
+  record_buffer = 'RECORD_BUFFER',
+  record_buffer_ready = 'RECORD_BUFFER_READY'
 }
 
 export interface KickSynthPortMessage {
@@ -38,6 +41,7 @@ class KickSynth {
   private hp: BiquadFilterNode;
   private analyzer: AnalyserNode;
   private worklet_node_: AudioWorkletNode|undefined;
+  private record_finished_ = false;
 
   constructor(audio_ctx: AudioContext, sequence_length: number, bpm: number) {
     this.ctx = audio_ctx;
@@ -79,8 +83,26 @@ class KickSynth {
           // check step by adding port listener
           this.worklet_node_.port.addEventListener(
               'message', (ev: MessageEvent) => {
-                if (ev.data.type == KickSynthMessageType.step_val)
-                  this.current_step_ = ev.data.value;
+                const msg_data = ev.data;
+                switch (msg_data.type) {
+                  case KickSynthMessageType.step_val:
+                    this.current_step_ = ev.data.value;
+                    break;
+                  case KickSynthMessageType.record_buffer_ready:
+                    this.record_finished_ = msg_data.value;
+                    break;
+                  case KickSynthMessageType.record_buffer:
+                    const blob = new Blob(
+                        [msg_data.value], {type: 'audio/wav; codecs=0'});
+                    const blob_url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = blob_url;
+                    a.download = 'Substrata.wav';
+                    a.click();
+                    break;
+                  default:
+                    break;
+                }
               });
           this.worklet_node_.port.start();
           this.initialized = true;
@@ -189,6 +211,20 @@ class KickSynth {
   public MIDIClockReset() {
     this.worklet_node_?.port.postMessage(
         {type: KickSynthMessageType.midi_clock_reset});
+  }
+  public StartRecord(num_loops: number) {
+    this.record_finished_ = false;
+    this.worklet_node_?.port.postMessage(
+        {type: KickSynthMessageType.record, value: num_loops});
+  }
+  public FinishedRecording() {
+    this.worklet_node_?.port.postMessage(
+        {type: KickSynthMessageType.record_buffer_ready});
+    return this.record_finished_;
+  }
+  public GetRecordBuffer() {
+    this.worklet_node_?.port.postMessage(
+        {type: KickSynthMessageType.record_buffer});
   }
 }
 

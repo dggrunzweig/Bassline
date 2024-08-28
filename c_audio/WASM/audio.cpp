@@ -1,5 +1,7 @@
 #include "audio.hpp"
 
+#include <cstring>
+
 const unsigned kFramesPerBuffer = 128;
 const unsigned kBytesPerChannel = kFramesPerBuffer * sizeof(float);
 const float kAttackTime = 0.0001;
@@ -16,6 +18,12 @@ KickSynth::KickSynth(unsigned int sample_rate) {
   fm_level_.setValueImmediate(audio_utils::db2mag(-60));
   fm_rate_.setRange(0.0001, 10000);
   fm_rate_.setValueImmediate(0);
+  output_buffer_ = new float[kFramesPerBuffer];
+}
+
+KickSynth::~KickSynth() {
+  if (record_buffer_) delete[] record_buffer_;
+  if (output_buffer_) delete[] output_buffer_;
 }
 
 void KickSynth::Process(uintptr_t output_ptr, unsigned num_frames,
@@ -26,14 +34,15 @@ void KickSynth::Process(uintptr_t output_ptr, unsigned num_frames,
   if (!running_) {
     memset(output_buffer, 0, num_frames * num_channels * sizeof(float));
   } else {
+    unsigned int record_offset = 0;
     const float t_inc = 1. / fs_;
     float x = 0;
     for (unsigned i = 0; i < num_frames; ++i) {
       // check if it should trigger a new step
       bool should_trig =
           use_midi_ ? (midi_ticks_ >= 6) : (t_ - t_last_ > step_duration_);
+      // record buffer offset
       if (should_trig) {
-        midi_ticks_ = 0;
         if (trigger_[step_] == 1) {
           t_ = 0;
           t_trig_ = t_;
@@ -45,21 +54,33 @@ void KickSynth::Process(uintptr_t output_ptr, unsigned num_frames,
           b_ = bend_[step_];
           // convert tone to usable value (-24 -> 12 db);
           tn_ = audio_utils::db2mag((tone_[step_]) * 36 - 24);
+          if (record_ready_ && step_ == 0) {
+            record_offset = i;
+            record_begin_ = true;
+          }
         }
+        midi_ticks_ = 0;
         t_last_ = t_;
         step_ = (step_ + 1) % seq_length_;
       }
-      // generate voice
-      x = Voice(t_, t_trig_, f_, v_, d_, b_, tn_,
-                fm_level_.getValueAndInterpolate(),
-                fm_rate_.getValueAndInterpolate());
 
-      // write to buffer
-      for (unsigned ch = 0; ch < num_channels; ++ch) {
-        output_buffer[i + ch * num_frames] = x;  // x;
-      }
+      // generate voice
+      output_buffer_[i] = Voice(t_, t_trig_, f_, v_, d_, b_, tn_,
+                                fm_level_.getValueAndInterpolate(),
+                                fm_rate_.getValueAndInterpolate());
+
       // increment phase
       t_ += t_inc;
+    }
+    // copy out to the channels of the output buffer
+    for (unsigned ch = 0; ch < num_channels; ++ch) {
+      memcpy(&output_buffer[ch * num_frames], output_buffer_,
+             num_frames * sizeof(float));
+    }
+    // copy to record buffer if needed
+    if (record_begin_) {
+      PushBufferToRecordBuffer(output_buffer_, num_frames, record_offset,
+                               (num_frames - record_offset));
     }
   }
 }
@@ -175,3 +196,56 @@ void KickSynth::UseMIDI(bool use_midi) { use_midi_ = use_midi; }
 void KickSynth::MIDIClockPulse() { midi_ticks_++; }
 
 void KickSynth::MIDIClockReset() { midi_ticks_ = 0; }
+
+void KickSynth::RecordAudio(unsigned int num_sequence_loops) {
+  // mono output recording
+  // calculate steps
+  remaining_frames_ = num_sequence_loops * seq_length_;
+  // calculate frames
+  remaining_frames_ *= (step_duration_ * fs_);
+  buffer_offset_ = 0;
+  buffer_len_ = remaining_frames_;
+  // create buffer
+  if (record_buffer_) delete[] record_buffer_;
+  record_buffer_ = new float[remaining_frames_];
+  memset(record_buffer_, 0, remaining_frames_ * sizeof(float));
+  // let the system know it's ready
+  record_ready_ = true;
+  record_finished_ = false;
+  record_begin_ = false;
+}
+
+void KickSynth::PushBufferToRecordBuffer(float* buffer, int buffer_len,
+                                         int offset, int frames_to_copy) {
+  assert(frames_to_copy + offset <= buffer_len &&
+         "Offset + frames to copy must be less than or equal to the number of "
+         "frames in the buffer");
+  if (remaining_frames_ > frames_to_copy) {
+    memcpy(&record_buffer_[buffer_offset_], &buffer[offset],
+           frames_to_copy * sizeof(float));
+    remaining_frames_ -= frames_to_copy;
+    buffer_offset_ += frames_to_copy;
+  } else {
+    memcpy(&record_buffer_[buffer_offset_], &buffer[offset],
+           remaining_frames_ * sizeof(float));
+    remaining_frames_ = 0;
+    buffer_offset_ = 0;
+    record_ready_ = false;
+    record_begin_ = false;
+    record_finished_ = true;
+  }
+}
+
+uintptr_t KickSynth::GetRecordBufferAsWav() {
+  if (record_finished_) {
+    uint8_t* wav_stream =
+        wav_writer_.Write(record_buffer_, 1, buffer_len_, fs_);
+    return uintptr_t(&wav_stream[0]);
+  } else {
+    assert(false && "Recording process not finished");
+    return 0;
+  }
+}
+int KickSynth::GetWavSizeInBytes() {
+  return buffer_len_ * 2 + sizeof(WAVHeader);
+};

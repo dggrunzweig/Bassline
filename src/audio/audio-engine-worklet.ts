@@ -8,7 +8,7 @@ class AudioEngineWorklet extends AudioWorkletProcessor {
 
   constructor() {
     super();
-    this.output_buffer_ = new HeapAudioBuffer(Module, 128, 2, 32);
+    this.output_buffer_ = new HeapAudioBuffer(Module, 128, 1, 32);
     this.synth = new Module.KickSynth(sampleRate);
     this.synth.SetBPM(120);
     this.port.onmessage = (event: MessageEvent) => {
@@ -62,6 +62,30 @@ class AudioEngineWorklet extends AudioWorkletProcessor {
           break;
         case KickSynthMessageType.midi_clock_reset:
           this.synth.MIDIClockReset();
+          break;
+        case KickSynthMessageType.record:
+          this.synth.RecordAudio(msg_data.value);
+          break;
+        case KickSynthMessageType.record_buffer_ready:
+          this.port.postMessage({
+            type: KickSynthMessageType.record_buffer_ready,
+            value: this.synth.RecordFinished()
+          });
+          break;
+        case KickSynthMessageType.record_buffer:
+          if (this.synth.RecordFinished()) {
+            console.log('Requesting Record Buffer Data');
+            // convert data to javascript readable
+            let heap = this.synth.GetRecordBufferAsWav();
+            let data_len = this.synth.GetWavSizeInBytes();
+            const buf_data = new Uint8Array(data_len)
+            for (let i = 0; i < data_len; ++i) {
+              buf_data[i] =
+                  Module.HEAPU8[heap / Uint8Array.BYTES_PER_ELEMENT + i]
+            }
+            this.port.postMessage(
+                {type: KickSynthMessageType.record_buffer, value: buf_data});
+          }
           break;
         default:
           break;
