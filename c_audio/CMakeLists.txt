@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(WASM)
+project(SUBSTRATA_WASM)
 
 # GoogleTest requires at least C++14
 set(CMAKE_CXX_STANDARD 14)
@@ -16,7 +16,7 @@ set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
 set(TESTS
-    audio_utils_test.cpp
+    ./src/audio_utils_test.cpp
 )
 
 enable_testing()

@@ -1,5 +1,5 @@
 # List of dependencies to compile
-DEPS = audio.cpp oscillator.cpp
+DEPS = ./src/audio.cpp ./src/oscillator.cpp
 
 # WASM=1 ensures wasm is built
 # SINGLE_FILE=1 combines wasm module and js wrapper into a single file 
@@ -15,12 +15,12 @@ build: $(DEPS)
 	  -s SINGLE_FILE=1 \
 	  -s EXPORTED_FUNCTIONS="['_malloc']" \
 	  $(DEPS) \
-	  -o ../../src/audio/kick-synth-WASM.js \
+	  -o ../src/audio/kick-synth-WASM.js \
 	  --pre-js pre-js.js \
 	  --post-js post-js.js 
 
 clean:
-	@rm -f ../src/kick-synth.js
+	@rm -f ../src/audio/kick-synth-WASM.js
 
 test-build:
 	@cmake -S . -B build_test

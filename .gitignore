@@ -28,4 +28,4 @@ dist-ssr
 .netlify
 
 # WASM and Make File related clutter
-c_audio/WASM/build_test
+c_audio/build_test
