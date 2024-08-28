@@ -11,12 +11,9 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "extendable-media-recorder": "^9.2.9",
-    "extendable-media-recorder-wav-encoder": "^7.0.113",
     "react": "^18.3.1",
     "react-device-detect": "^2.2.3",
     "react-dom": "^18.3.1",
-    "react-draggable": "^4.4.6",
     "@types/audioworklet": "^0.0.58",
     "@types/webaudioapi": "^0.0.27",
     "atob": "^2.1.2",
