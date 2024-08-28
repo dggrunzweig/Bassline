@@ -30,6 +30,7 @@ export class AudioMain {
   private should_record = false;
   private recording = false;
   private record_steps = 64;
+  private record_duration = 64;
   private recording_node: RecorderNode;
   private setRecording: Function;
   private midi_supported = false;
@@ -117,9 +118,10 @@ export class AudioMain {
         if (this.running) {
           // 6 clock pulses == 16th note
           if ((this.clock_pulses % 6) == 0) {
+            this.Record();
             if (this.steps[this.current_step] == 1) {
               this.Trigger(
-                  this.ctx.currentTime, this.velocity[this.current_step],
+                  this.ctx.currentTime + 0.01, this.velocity[this.current_step],
                   this.decay[this.current_step],
                   this.pitch_bend[this.current_step],
                   this.tone[this.current_step], 60 / (this.midi_tempo * 4));
@@ -143,19 +145,11 @@ export class AudioMain {
       }
       // start message
       if (lower_half == 10) {
-        this.InitialStart();
-        clearInterval(this.sequence_timer);
-        this.running = true;
-        this.using_midi = true;
-        this.current_step = 0;
-        this.clock_pulses = 0;
-        this.midi_step_time = this.ctx.currentTime;
+        this.Start(true);
       }
       // stop message
       if (lower_half == 12) {
-        clearInterval(this.sequence_timer);
-        this.running = false;
-        this.using_midi = false;
+        this.Stop(true);
       }
     }
   }
@@ -166,7 +160,6 @@ export class AudioMain {
     if (!this.running) return;
     const ctx = this.ctx;
     const cur_time = ctx.currentTime;
-    at_time = Math.max(cur_time + 0.01, at_time);
     const root_hz = NoteToPitch(this.root_note, this.octave);
     const osc = createOscillator(
         ctx, 'sine', root_hz + 640 * pitch_bend * pitch_bend, 0);
@@ -267,8 +260,40 @@ export class AudioMain {
     this.step_node.offset.setValueAtTime(this.current_step, current_time);
     current_time += step_duration;
     this.current_step = (this.current_step + 1) % this.total_steps;
-    if (this.recording) this.record_steps--;
     return current_time;
+  }
+
+  private Record() {
+    // fired once when the recording is requested
+    if (this.should_record && this.current_step == 0 && !this.recording) {
+      this.recording = true;
+      this.recording_node.StartRecording();
+      this.record_steps = this.record_duration;
+    }
+
+    // while Recording
+    if (this.recording) {
+      if (this.record_steps <= 0) {
+        // stop recording
+        this.recording = false;
+        this.should_record = false;
+        this.recording_node.StopRecording();
+        setTimeout(() => {
+          if (this.recording_node.GetBlobURL() != null) {
+            const link = document.createElement('a');
+            const blob = this.recording_node.GetBlobURL();
+            if (blob) {
+              link.href = blob;
+              link.download = 'substrata' + this.recording_node.GetExtension();
+              link.innerHTML = '';
+              link.click();
+            }
+            this.setRecording(false);
+          }
+        }, 2000);
+      }
+      this.record_steps--;
+    }
   }
 
   private Sequence() {
@@ -277,37 +302,9 @@ export class AudioMain {
     current_time = this.step(current_time, step_duration);
     this.sequence_timer = setInterval(() => {
       step_duration = 60 / (4 * this.bpm);
-      // fired once when the recording is requested
-      if (this.should_record && this.current_step == 0 && !this.recording) {
-        this.recording = true;
-        this.recording_node.StartRecording();
-      }
-
       while (current_time < this.ctx.currentTime + step_duration) {
+        this.Record();
         current_time = this.step(current_time, step_duration);
-      }
-
-      if (this.recording) {
-        if (this.record_steps < 0) {
-          // stop recording
-          this.recording = false;
-          this.should_record = false;
-          this.recording_node.StopRecording();
-          setTimeout(() => {
-            if (this.recording_node.GetBlobURL() != null) {
-              const link = document.createElement('a');
-              const blob = this.recording_node.GetBlobURL();
-              if (blob) {
-                link.href = blob;
-                link.download =
-                    'substrata' + this.recording_node.GetExtension();
-                link.innerHTML = '';
-                link.click();
-              }
-              this.setRecording(false);
-            }
-          }, 2000);
-        }
       }
     }, 50);
   }
@@ -321,20 +318,41 @@ export class AudioMain {
     }
   }
 
-  public Start() {
+  private Start(midi = false) {
     this.InitialStart();
-    this.running = !this.running;
-    if (!this.running) {
+    this.running = true;
+    this.current_step = 0;
+    this.output_gain.gain.setTargetAtTime(1, this.ctx.currentTime, 0.1);
+    if (!midi) {
+      this.Sequence();
+      this.using_midi = false;
+    } else {
       clearInterval(this.sequence_timer);
-      this.output_gain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.5);
+      this.using_midi = true;
+      this.clock_pulses = 0;
+      this.midi_step_time = this.ctx.currentTime;
+    }
+  }
+
+  private Stop(midi = false) {
+    this.running = false;
+    clearInterval(this.sequence_timer);
+    this.output_gain.gain.setTargetAtTime(0, this.ctx.currentTime, 0.5);
+    if (!midi) {
       setTimeout(() => {
         if (!this.running) this.ctx.suspend();
       }, 1000);
     } else {
-      this.current_step = 0;
-      this.Sequence();
-      this.output_gain.gain.setTargetAtTime(1, this.ctx.currentTime, 0.1);
+      this.using_midi = false;
     }
+  }
+
+  public Run() {
+    this.InitialStart();
+    if (this.running)
+      this.Stop();
+    else
+      this.Start();
   }
 
   public isRunning() {
@@ -350,8 +368,8 @@ export class AudioMain {
     return this.midi;
   }
 
-  public SetRecordDuration(duration: number) {
-    this.record_steps = duration * 16;
+  public SetRecordDuration(duration_measures: number) {
+    this.record_duration = duration_measures * 16;
   }
 
   public RecordAudio(setRecording: Function) {

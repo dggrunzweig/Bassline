@@ -71,6 +71,9 @@ class RecorderNode {
   StartRecording() {
     this.media_recorder.start();
     this.started = true;
+    this.blob_ready = false;
+    this.blob_url = '';
+    this.chunks = new Array<BlobPart>();
   }
 
   Pause() {

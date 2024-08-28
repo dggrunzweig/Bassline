@@ -7,7 +7,7 @@ export default {
   theme: {
     extend: {
       backgroundImage: {
-        'noise': "url('./assets/nnnoise.svg')",
+        'noise': "url('assets/nnnoise.svg')",
       },
       boxShadow: {
         'glowing': '0 0 15px rgba(0, 0, 0, 0.3)',

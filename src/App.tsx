@@ -246,7 +246,7 @@ const App = ({ num_steps, init_bpm, audio_main }: props) => {
                     ColorPalette(palette).knob_border
                   }
                   onClick={() => {
-                    audio_main.Start();
+                    audio_main.Run();
                     setRunning(audio_main.isRunning());
                   }}
                   disabled={audio_main.isUsingMidi()}
