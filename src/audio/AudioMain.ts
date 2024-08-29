@@ -109,7 +109,7 @@ export class AudioMain {
 
   public setDecay(decay: number, step: number) {
     // allows decay time to be between 0 and 4 steps long
-    this.synth_engine_.SetDuration(4 * decay, step);
+    this.synth_engine_.SetDuration(decay, step);
   }
 
   public setBPM(bpm: number) {

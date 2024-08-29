@@ -1,7 +1,13 @@
 #include "audio_utils.hpp"
 
 #include <gtest/gtest.h>
-// Demonstrate some basic assertions.
+
+TEST(AudioUtilsTest, PhasorTest) {
+  EXPECT_FLOAT_EQ(0.01, audio_utils::Phasor(0, 1, 1. / 100.));
+  EXPECT_FLOAT_EQ(-0.01, audio_utils::Phasor(0, -1, 1. / 100.));
+  EXPECT_FLOAT_EQ(0.34, audio_utils::Phasor(0, 3.4, 1. / 10.));
+}
+
 TEST(AudioUtilsTest, RampValid) {
   EXPECT_FLOAT_EQ(0, audio_utils::Ramp(0, 1));
   EXPECT_FLOAT_EQ(0.99, audio_utils::Ramp(0.99, 1));

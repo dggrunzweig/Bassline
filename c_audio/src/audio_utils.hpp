@@ -6,8 +6,8 @@
 
 namespace audio_utils {
 
-const float PI = 3.141592654;
-const float TPI = 6.28318530718;
+const float PI = M_PI;
+const float TPI = 2 * M_PI;
 
 static float db2mag(float db) { return powf(10, db / 20); }
 
@@ -16,8 +16,8 @@ static float mag2db(float mag) {
   return mag == 0 ? -200 : 20 * log10f(mag);
 }
 
-static float Phasor(float phase, float frequency, float fs) {
-  phase += frequency / fs;
+static float Phasor(float phase, float frequency, float T_fs) {
+  phase += frequency * T_fs;
   phase -= truncf(phase);
   return phase;
 }
