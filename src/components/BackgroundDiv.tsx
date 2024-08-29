@@ -17,9 +17,7 @@ const BackgroundDiv = ({ palette, children }: props) => {
         ColorPalette(palette).gradient_3
       }
     >
-      <div className="w-full h-full bg-noise bg-repeat overflow-hidden">
-        {children}
-      </div>
+      {children}
     </div>
   );
 };
