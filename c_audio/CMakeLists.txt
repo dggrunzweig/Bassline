@@ -4,7 +4,7 @@ project(SUBSTRATA_WASM)
 # GoogleTest requires at least C++14
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-
+add_definitions(-DNDEBUG)
 
 include(FetchContent)
 FetchContent_Declare(
@@ -17,6 +17,9 @@ FetchContent_MakeAvailable(googletest)
 
 set(TESTS
     ./src/audio_utils_test.cpp
+    ./src/oscillator_test.cpp
+    ./src/oscillator.cpp
+    ./src/wavetables_test.cpp
 )
 
 enable_testing()

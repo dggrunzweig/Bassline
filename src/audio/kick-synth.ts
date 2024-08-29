@@ -1,3 +1,4 @@
+import WorkletURL from './audio-engine-worklet?worker&url';
 import {BPMToTime, createBiquadFilter, createCompressor, createDigitalDelay, createGain, db2mag, DigitalDelay} from './Utilities.js';
 
 export enum KickSynthMessageType {
@@ -70,10 +71,8 @@ class KickSynth {
     this.delay.output.connect(this.comp);
 
     // Create a worklet to handle process calls
-    const worklet_url = new URL('audio-engine-worklet.ts', import.meta.url);
-    audio_ctx.audioWorklet.addModule(worklet_url)
+    audio_ctx.audioWorklet.addModule(WorkletURL)
         .then(() => {
-          console.log('Creating worklet');
           // pass in the WASM synth engine as a parameter
           this.worklet_node_ = new AudioWorkletNode(
               audio_ctx, 'audio-engine-processor',

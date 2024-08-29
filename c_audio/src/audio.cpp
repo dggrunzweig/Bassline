@@ -93,7 +93,7 @@ float KickSynth::Voice(const float time, const float trig_time,
       audio_utils::ADExpEnv(time, trig_time, kAttackTime, velocity, duration);
   v_env_ = v_env_ + kEnvInterpRate * (v_env_instant - v_env_);
   const float p_env_instant = audio_utils::ADExpEnv(
-      time, trig_time, kAttackTime, 12 * frequency * bend, duration / 2);
+      time, trig_time, kAttackTime, 12 * frequency * bend, duration / 4);
   p_env_ = p_env_ + kEnvInterpRate * (p_env_instant - p_env_);
   float f = frequency + p_env_;
   const float phase_m = tone * tone_osc_.Sine(1.07 * frequency, 0) +
@@ -158,8 +158,8 @@ void KickSynth::SetVelocity(float v, int step) {
 
 void KickSynth::SetDuration(float d, int step) {
   assert(step >= 0 && step < kMaxSteps);
-  assert(d >= 0 && d <= 4 && "Duration invalid, must be between 0 and 4");
-  duration_[step] = audio_utils::clamp(d, 0.0001, 4);
+  assert(d >= 0 && d <= 1 && "Duration invalid, must be between 0 and 1");
+  duration_[step] = 6 * audio_utils::clamp(d, 0.0001, 1);
 }
 
 void KickSynth::SetBend(float b, int step) {
@@ -246,6 +246,7 @@ uintptr_t KickSynth::GetRecordBufferAsWav() {
     return 0;
   }
 }
+
 int KickSynth::GetWavSizeInBytes() {
   return buffer_len_ * 2 + sizeof(WAVHeader);
 };
