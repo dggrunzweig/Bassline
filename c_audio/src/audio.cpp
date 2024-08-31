@@ -54,10 +54,10 @@ void KickSynth::Process(uintptr_t output_ptr, unsigned num_frames,
           b_ = bend_[step_];
           // convert tone to usable value (-24 -> 12 db);
           tn_ = audio_utils::db2mag((tone_[step_]) * 36 - 24);
-          if (record_ready_ && step_ == 0) {
-            record_offset = i;
-            record_begin_ = true;
-          }
+        }
+        if (record_ready_ && step_ == 0) {
+          record_offset = i;
+          record_begin_ = true;
         }
         midi_ticks_ = 0;
         t_last_ = t_;
