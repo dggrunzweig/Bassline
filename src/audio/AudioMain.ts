@@ -87,8 +87,8 @@ export class AudioMain {
     return this.synth_engine_.GetAnalyzer();
   }
 
-  public SetGlobalFM(frequency: number, level_dB: number) {
-    this.synth_engine_.SetGlobalFM(level_dB, frequency);
+  public SetGlobalFM(rate_multiplier: number, level_dB: number) {
+    this.synth_engine_.SetGlobalFM(level_dB, rate_multiplier);
   };
 
   public SetTrigger(on: boolean, step: number) {

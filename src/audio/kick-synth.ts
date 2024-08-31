@@ -194,10 +194,10 @@ class KickSynth {
     this.worklet_node_?.port.postMessage(
         {type: KickSynthMessageType.set_tone, value: t, step: step});
   }
-  public SetGlobalFM(level_dB: number, rate_hz: number) {
+  public SetGlobalFM(level_dB: number, rate_multiplier: number) {
     this.worklet_node_?.port.postMessage({
       type: KickSynthMessageType.set_global_fm,
-      value: {level_dB: level_dB, rate_hz: rate_hz}
+      value: {level_dB: level_dB, rate_multiplier: rate_multiplier}
     });
   }
   public UseMIDI(use_midi: boolean) {

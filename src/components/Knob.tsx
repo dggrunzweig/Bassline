@@ -10,6 +10,7 @@ interface props {
   max_value: number;
   palette: number;
   enabled: boolean;
+  use_float: boolean;
 }
 
 const Knob = ({
@@ -21,6 +22,7 @@ const Knob = ({
   onChange,
   palette,
   enabled = true,
+  use_float = false,
 }: props) => {
   const [current_val, setValue] = useState(init_value);
 
@@ -48,9 +50,12 @@ const Knob = ({
           const y = 1 - (e.clientY - bounds.top) / bounds.height;
           let angle = (Math.atan2(x - 0.5, y - 0.5) * 180) / Math.PI + 180;
           angle = clamp(angle, 45, 315) - 45;
-          let new_val = Math.floor(
-            (angle / 270) * (max_value - min_value) + min_value
-          );
+          let new_val = (angle / 270) * (max_value - min_value) + min_value;
+          // 2 points of precision
+          new_val = Math.floor(new_val * 100) / 100;
+          if (!use_float) {
+            new_val = Math.floor(new_val);
+          }
           if (e.shiftKey) {
             if (angle < 180) new_val = min_value;
             else new_val = max_value;

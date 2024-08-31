@@ -16,7 +16,7 @@ KickSynth::KickSynth(unsigned int sample_rate) {
   ClearSequencer();
   fm_level_.setRange(audio_utils::db2mag(-60), audio_utils::db2mag(36));
   fm_level_.setValueImmediate(audio_utils::db2mag(-60));
-  fm_rate_.setRange(0.0001, 10000);
+  fm_rate_.setRange(0, 10);
   fm_rate_.setValueImmediate(0);
   output_buffer_ = new float[kFramesPerBuffer];
 }
@@ -88,7 +88,7 @@ void KickSynth::Process(uintptr_t output_ptr, unsigned num_frames,
 float KickSynth::Voice(const float time, const float trig_time,
                        const float frequency, const float velocity,
                        const float duration, const float bend, const float tone,
-                       const float global_fm, const float global_fm_rate) {
+                       const float global_fm, const float global_fm_mult) {
   const float v_env_instant =
       audio_utils::ADExpEnv(time, trig_time, kAttackTime, velocity, duration);
   v_env_ = v_env_ + kEnvInterpRate * (v_env_instant - v_env_);
@@ -97,7 +97,7 @@ float KickSynth::Voice(const float time, const float trig_time,
   p_env_ = p_env_ + kEnvInterpRate * (p_env_instant - p_env_);
   float f = frequency + p_env_;
   const float phase_m = tone * tone_osc_.Sine(1.07 * frequency, 0) +
-                        global_fm * fm_osc_.Sine(global_fm_rate, 0);
+                        global_fm * fm_osc_.Sine(global_fm_mult * frequency, 0);
 
   // harmonic waveform 1 = 0db, 2 = -24db (0.0631), 3 = -40dB (0.01);
   float harmonic_weights[3] = {1, 0.0631, 0.01};
@@ -174,14 +174,14 @@ void KickSynth::SetTone(float t, int step) {
   tone_[step] = audio_utils::clamp(t, 0, 1);
 }
 
-void KickSynth::SetGlobalFM(float level_dB, float rate) {
-  assert(rate >= 0 && rate <= 10000 &&
-         "FM Rate Invalid, must be between 0Hz and 10KHz");
+void KickSynth::SetGlobalFM(float level_dB, float rate_multiplier) {
+  assert(rate_multiplier >= 0 && rate_multiplier <= 10 &&
+         "FM Rate Multiplier Invalid, must be between 0 and 10");
   assert(level_dB >= -60 && level_dB <= 36 &&
          "FM level Invalid, must be between -60dB and 36dB");
   fm_level_.setValueInterpolate(audio_utils::db2mag(level_dB),
                                 kFramesPerBuffer);
-  fm_rate_.setValueInterpolate(audio_utils::clamp(rate, 0.0001, 10000),
+  fm_rate_.setValueInterpolate(audio_utils::clamp(rate_multiplier, 0, 10),
                                kFramesPerBuffer);
 }
 

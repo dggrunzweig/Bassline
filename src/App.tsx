@@ -152,10 +152,13 @@ const App = ({ num_steps, init_bpm, audio_main }: props) => {
   // Knob Parameters
   // ring mod
   const fm_params = useRef({
-    frequency: 100,
+    rate_multiplier: 0,
     range: -24,
   });
-  audio_main.SetGlobalFM(fm_params.current.frequency, fm_params.current.range);
+  audio_main.SetGlobalFM(
+    fm_params.current.rate_multiplier,
+    fm_params.current.range
+  );
 
   // delay
   const delay_params = useRef({
@@ -288,14 +291,15 @@ const App = ({ num_steps, init_bpm, audio_main }: props) => {
               />
               <Knob
                 key="1001"
-                init_value={fm_params.current.frequency}
-                units="Hz"
-                min_value={1}
-                max_value={300}
+                init_value={fm_params.current.rate_multiplier}
+                units=""
+                min_value={0}
+                max_value={10}
                 name="FM Freq"
                 enabled={true}
+                use_float={true}
                 onChange={(x: number) => {
-                  fm_params.current.frequency = x;
+                  fm_params.current.rate_multiplier = x;
                   audio_main.SetGlobalFM(x, fm_params.current.range);
                 }}
                 palette={palette}
@@ -310,7 +314,7 @@ const App = ({ num_steps, init_bpm, audio_main }: props) => {
                 enabled={true}
                 onChange={(x: number) => {
                   fm_params.current.range = x;
-                  audio_main.SetGlobalFM(fm_params.current.frequency, x);
+                  audio_main.SetGlobalFM(fm_params.current.rate_multiplier, x);
                 }}
                 palette={palette}
               />

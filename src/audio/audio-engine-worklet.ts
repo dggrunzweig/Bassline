@@ -53,7 +53,7 @@ class AudioEngineWorklet extends AudioWorkletProcessor {
           break;
         case KickSynthMessageType.set_global_fm:
           this.synth.SetGlobalFM(
-              msg_data.value.level_dB, msg_data.value.rate_hz);
+              msg_data.value.level_dB, msg_data.value.rate_multiplier);
           break;
         case KickSynthMessageType.use_midi:
           this.synth.UseMIDI(msg_data.value);
