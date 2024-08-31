@@ -283,6 +283,7 @@ const App = ({ num_steps, init_bpm, audio_main }: props) => {
                 max_value={180}
                 name="Tempo"
                 enabled={!audio_main.isUsingMidi()}
+                use_float={false}
                 onChange={(x: number) => {
                   BPM.current = x;
                   audio_main.setBPM(x);
@@ -292,10 +293,10 @@ const App = ({ num_steps, init_bpm, audio_main }: props) => {
               <Knob
                 key="1001"
                 init_value={fm_params.current.rate_multiplier}
-                units=""
+                units="X"
                 min_value={0}
                 max_value={10}
-                name="FM Freq"
+                name="FM Mult"
                 enabled={true}
                 use_float={true}
                 onChange={(x: number) => {
@@ -312,6 +313,7 @@ const App = ({ num_steps, init_bpm, audio_main }: props) => {
                 max_value={24}
                 name="FM Lvl"
                 enabled={true}
+                use_float={false}
                 onChange={(x: number) => {
                   fm_params.current.range = x;
                   audio_main.SetGlobalFM(fm_params.current.rate_multiplier, x);
@@ -326,6 +328,7 @@ const App = ({ num_steps, init_bpm, audio_main }: props) => {
                 max_value={0}
                 name="Echo Lvl"
                 enabled={true}
+                use_float={false}
                 onChange={(x: number) => {
                   delay_params.current.mix = x;
                   audio_main.setDelayParams(x, delay_params.current.fb);
@@ -340,6 +343,7 @@ const App = ({ num_steps, init_bpm, audio_main }: props) => {
                 max_value={-3}
                 name="Echo FB"
                 enabled={true}
+                use_float={false}
                 onChange={(x: number) => {
                   delay_params.current.fb = x;
                   audio_main.setDelayParams(delay_params.current.mix, x);
@@ -354,6 +358,7 @@ const App = ({ num_steps, init_bpm, audio_main }: props) => {
                 max_value={500}
                 name="HPF"
                 enabled={true}
+                use_float={false}
                 onChange={(x: number) => {
                   hpf.current = x;
                   audio_main.setHPFrequency(x);
