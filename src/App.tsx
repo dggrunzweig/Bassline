@@ -111,6 +111,8 @@ const App = ({ num_steps, audio_main }: props) => {
             palette={palette}
           />
           <SettingsMenu
+            synth_settings={synth_settings}
+            setSynthSettings={updateSynthAndCookies}
             isOpen={view_settings_menu}
             onClose={setViewSettingsMenu}
             palette={palette}
