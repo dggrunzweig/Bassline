@@ -4,7 +4,7 @@ import { isMobileOnly } from "react-device-detect";
 import { ColorPalette } from "./components/Colors";
 
 import { AudioMain } from "./audio/AudioMain";
-import { CreatePreset, kDefaultPreset, SynthPreset } from "./Presets";
+import { kDefaultPreset, SynthPreset } from "./Presets";
 import InstructionOverlay from "./components/InstructionOverlay";
 import SettingsMenu from "./components/SettingsMenu";
 import LowerSettingsPane from "./components/LowerSettingsPane";

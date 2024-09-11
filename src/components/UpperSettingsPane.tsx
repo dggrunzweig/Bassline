@@ -1,6 +1,6 @@
 import { AudioMain } from "../audio/AudioMain";
 import { ColorPalette } from "./Colors";
-import { useState, useRef } from "react";
+import { useState } from "react";
 import Knob from "./Knob";
 import Visualizer from "./Visualizer";
 import { SynthPreset } from "../Presets";

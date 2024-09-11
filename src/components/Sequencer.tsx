@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { AudioMain } from "../audio/AudioMain";
 import { SynthPreset } from "../Presets";
 import TwoDButton from "./2DButton";
