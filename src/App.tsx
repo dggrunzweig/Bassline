@@ -30,7 +30,7 @@ const App = ({ num_steps, audio_main }: props) => {
 
   const preset_list = useRef(["Default"]);
   const preset_index = useRef(0);
-  if (preset_cookie) {
+  if (preset_cookie["substrata-synth-current-settings"]) {
     settings = preset_cookie["substrata-synth-current-settings"];
     audio_main.setBPM(settings.bpm);
     preset_list.current.push("Last Session");
