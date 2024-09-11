@@ -62,7 +62,7 @@ const App = ({ num_steps, init_bpm, audio_main }: props) => {
 
   const [running, setRunning] = useState(false);
   const [recording, setRecording] = useState(false);
-  const [octave, setOctave] = useState(1);
+  const [octave, setOctave] = useState(SequencerPreset1.octave);
   const [view_instructions, setViewInstructions] = useState(true);
   const [view_settings_menu, setViewSettingsMenu] = useState(false);
 
@@ -87,35 +87,35 @@ const App = ({ num_steps, init_bpm, audio_main }: props) => {
   const use_preset = true;
 
   // per step parameters
-  audio_main.setOctave(octave);
+  audio_main.setOctave(octave ? 2 : 1);
 
   const vel_init = 0.9;
   const velocity = useRef(new Array<number>(num_steps).fill(vel_init));
   if (use_preset) {
-    velocity.current = SequencerPreset1.Volume;
+    velocity.current = SequencerPreset1.volume;
   } else velocity.current = new Array<number>(num_steps).fill(vel_init);
 
   const decay_init = 0.2;
   const decay = useRef(new Array<number>(num_steps).fill(decay_init));
   if (use_preset) {
-    decay.current = SequencerPreset1.Decay;
+    decay.current = SequencerPreset1.decay;
   } else decay.current = new Array<number>(num_steps).fill(decay_init);
 
   const pb_init = 0.2;
   const pitch_bend = useRef(new Array<number>(num_steps).fill(pb_init));
   if (use_preset) {
-    pitch_bend.current = SequencerPreset1.PitchBend;
+    pitch_bend.current = SequencerPreset1.pitch_bend;
   } else pitch_bend.current = new Array<number>(num_steps).fill(pb_init);
 
   const tone_init = 0.1;
   const tone = useRef(new Array<number>(num_steps).fill(tone_init));
   if (use_preset) {
-    tone.current = SequencerPreset1.Tone;
+    tone.current = SequencerPreset1.tone;
   } else tone.current = new Array<number>(num_steps).fill(tone_init);
 
   const steps = useRef(new Array<boolean>(num_steps).fill(false));
   if (use_preset) {
-    steps.current = SequencerPreset1.Steps;
+    steps.current = SequencerPreset1.steps;
   } else steps.current = new Array<boolean>(num_steps).fill(false);
 
   // initial setting
@@ -152,8 +152,8 @@ const App = ({ num_steps, init_bpm, audio_main }: props) => {
   // Knob Parameters
   // ring mod
   const fm_params = useRef({
-    rate_multiplier: 0,
-    range: -24,
+    rate_multiplier: SequencerPreset1.fm_mult,
+    range: SequencerPreset1.fm_level,
   });
   audio_main.SetGlobalFM(
     fm_params.current.rate_multiplier,
@@ -162,13 +162,13 @@ const App = ({ num_steps, init_bpm, audio_main }: props) => {
 
   // delay
   const delay_params = useRef({
-    mix: -30,
-    fb: -12,
+    mix: SequencerPreset1.echo_level,
+    fb: SequencerPreset1.echo_fb,
   });
   audio_main.setDelayParams(delay_params.current.mix, delay_params.current.fb);
 
   // High Pass Filter
-  const hpf = useRef(20);
+  const hpf = useRef(SequencerPreset1.hpf);
   audio_main.setHPFrequency(hpf.current);
 
   // Prevent display is the window is too narrow
@@ -394,7 +394,7 @@ const App = ({ num_steps, init_bpm, audio_main }: props) => {
               <div className="flex flex-col gap-y-3 h-full">
                 <ToggleSlider
                   title="Octave"
-                  on_init={octave == 2}
+                  on_init={octave}
                   text_color={ColorPalette(palette).text_1}
                   border_color={ColorPalette(palette).knob_border}
                   knob_color={" bg-slate-50 "}
