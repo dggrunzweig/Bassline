@@ -11,13 +11,14 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "react": "^18.3.1",
-    "react-device-detect": "^2.2.3",
-    "react-dom": "^18.3.1",
     "@types/audioworklet": "^0.0.58",
     "@types/webaudioapi": "^0.0.27",
     "atob": "^2.1.2",
-    "buffer": "^6.0.3"
+    "buffer": "^6.0.3",
+    "react": "^18.3.1",
+    "react-cookie": "^7.2.0",
+    "react-device-detect": "^2.2.3",
+    "react-dom": "^18.3.1"
   },
   "devDependencies": {
     "@types/react": "^18.3.3",
