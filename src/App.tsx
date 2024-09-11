@@ -4,13 +4,14 @@ import { isMobileOnly } from "react-device-detect";
 import { ColorPalette } from "./components/Colors";
 
 import { AudioMain } from "./audio/AudioMain";
-import { kDefaultPreset } from "./Presets";
+import { CreatePreset, kDefaultPreset, SynthPreset } from "./Presets";
 import InstructionOverlay from "./components/InstructionOverlay";
 import SettingsMenu from "./components/SettingsMenu";
 import LowerSettingsPane from "./components/LowerSettingsPane";
 import UpperSettingsPane from "./components/UpperSettingsPane";
 import Sequencer from "./components/Sequencer";
 
+import { useCookies } from "react-cookie";
 interface props {
   num_steps: number;
   audio_main: AudioMain;
@@ -21,7 +22,27 @@ const App = ({ num_steps, audio_main }: props) => {
   const [palette, setPalette] = useState(0);
 
   // synth settings
-  const [synth_settings, setSynthSettings] = useState(kDefaultPreset);
+  const [preset_cookie, setPresetCookie] = useCookies([
+    "substrata-synth-current-settings",
+  ]);
+
+  let settings = kDefaultPreset;
+
+  const preset_list = useRef(["Default"]);
+  const preset_index = useRef(0);
+  if (preset_cookie) {
+    settings = preset_cookie["substrata-synth-current-settings"];
+    audio_main.setBPM(settings.bpm);
+    preset_list.current.push("Last Session");
+    preset_index.current = 1;
+  }
+
+  const [synth_settings, setSynthSettings] = useState(settings);
+
+  const updateSynthAndCookies = (settings: SynthPreset) => {
+    setSynthSettings(settings);
+    setPresetCookie("substrata-synth-current-settings", settings);
+  };
 
   // prevent use on mobile platforms
   if (isMobileOnly) {
@@ -133,20 +154,20 @@ const App = ({ num_steps, audio_main }: props) => {
             </div>
             <UpperSettingsPane
               synth_settings={synth_settings}
-              setSynthSettings={setSynthSettings}
+              setSynthSettings={updateSynthAndCookies}
               audio_main={audio_main}
               palette={palette}
             />
             <Sequencer
               synth_settings={synth_settings}
-              setSynthSettings={setSynthSettings}
+              setSynthSettings={updateSynthAndCookies}
               audio_main={audio_main}
               num_steps={num_steps}
               palette={palette}
             />
             <LowerSettingsPane
               synth_settings={synth_settings}
-              setSynthSettings={setSynthSettings}
+              setSynthSettings={updateSynthAndCookies}
               palette_index={palette}
               setPalette={setPalette}
               audio_main={audio_main}
