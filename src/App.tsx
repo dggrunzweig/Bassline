@@ -11,6 +11,7 @@ import Visualizer from "./components/Visualizer";
 import { SequencerPreset1 } from "./Presets";
 import InstructionOverlay from "./components/InstructionOverlay";
 import SettingsMenu from "./components/SettingsMenu";
+import LowerSettingsPane from "./components/LowerSettingsPane";
 
 interface props {
   num_steps: number;
@@ -389,82 +390,13 @@ const App = ({ num_steps, init_bpm, audio_main }: props) => {
                 );
               })}
             </div>
-
-            <div className="grid grid-row-2 w-full h-full pb-10">
-              <div className="flex flex-col gap-y-3 h-full">
-                <ToggleSlider
-                  title="Octave"
-                  on_init={octave}
-                  text_color={ColorPalette(palette).text_1}
-                  border_color={ColorPalette(palette).knob_border}
-                  knob_color={" bg-slate-50 "}
-                  knob_active_color={" bg-slate-50 "}
-                  text_off="Low"
-                  text_on="High"
-                  onToggle={(on: boolean) => {
-                    const o = on ? 2 : 1;
-                    setOctave(o);
-                    audio_main.setOctave(o);
-                  }}
-                />
-                {/* <ToggleSlider
-                  title="Preset"
-                  on_init={use_preset}
-                  text_color={ColorPalette(palette).text_2}
-                  border_color={ColorPalette(palette).border_button_standard}
-                  knob_color={ColorPalette(0).knob_dot}
-                  knob_active_color={ColorPalette(0).knob_dot}
-                  text_off="Off"
-                  text_on="On"
-                  onToggle={(on: boolean) => {
-                    setPreset(on);
-                  }}
-                /> */}
-                <ToggleSlider
-                  title="Colors"
-                  on_init={palette == 1}
-                  text_color={ColorPalette(palette).text_1}
-                  border_color={ColorPalette(palette).knob_border}
-                  knob_color={" bg-slate-50 "}
-                  knob_active_color={ColorPalette(1).knob_dot}
-                  text_off="Open Sky"
-                  text_on="Till Dawn"
-                  onToggle={(on: boolean) => {
-                    setPalette(on ? 1 : 0);
-                  }}
-                />
-              </div>
-              <div className="flex h-full justify-end items-end">
-                <div>
-                  <h1
-                    className={
-                      "text-xl font-mono text-right" +
-                      ColorPalette(palette).text_2
-                    }
-                  >
-                    Designed with love by David Grunzweig
-                  </h1>
-                  <p
-                    className={
-                      "text-md font-mono text-right mt-2" +
-                      ColorPalette(palette).text_2
-                    }
-                  >
-                    <a
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      href="https://greentwig.xyz"
-                      className={
-                        "underline italic" + ColorPalette(palette).link
-                      }
-                    >
-                      Green Twig Studios
-                    </a>
-                    , 2024
-                  </p>
-                </div>
-              </div>
-            </div>
+            <LowerSettingsPane
+              octave={octave}
+              setOctave={setOctave}
+              palette_index={palette}
+              setPalette={setPalette}
+              audio_main={audio_main}
+            />
           </div>
         </div>
       </BackgroundDiv>
