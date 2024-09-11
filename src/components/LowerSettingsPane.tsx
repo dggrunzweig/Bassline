@@ -1,28 +1,30 @@
-import React, { useState } from "react";
 import ToggleSlider from "./ToggleSlider";
 import { ColorPalette } from "./Colors";
 import { AudioMain } from "../audio/AudioMain";
-
+import { SynthPreset } from "../Presets";
 interface props {
+  synth_settings: SynthPreset;
+  setSynthSettings: (settings: SynthPreset) => void;
   audio_main: AudioMain;
-  octave: boolean;
   palette_index: number;
-  setOctave: Function;
-  setPalette: Function;
+  setPalette: (index: number) => void;
 }
 const LowerSettingsPane = ({
+  synth_settings,
+  setSynthSettings,
   audio_main,
-  octave,
   palette_index,
-  setOctave,
   setPalette,
 }: props) => {
+  // per step parameters
+  audio_main.setOctave(synth_settings.octave ? 2 : 1);
+
   return (
     <div className="grid grid-row-2 w-full h-full pb-10">
       <div className="flex flex-col gap-y-3 h-full">
         <ToggleSlider
           title="Octave"
-          on_init={octave}
+          on_init={synth_settings.octave}
           text_color={ColorPalette(palette_index).text_1}
           border_color={ColorPalette(palette_index).knob_border}
           knob_color={" bg-slate-50 "}
@@ -30,7 +32,7 @@ const LowerSettingsPane = ({
           text_off="Low"
           text_on="High"
           onToggle={(on: boolean) => {
-            setOctave(on);
+            setSynthSettings({ ...synth_settings, octave: on });
             audio_main.setOctave(on ? 2 : 1);
           }}
         />

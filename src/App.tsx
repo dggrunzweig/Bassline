@@ -1,28 +1,29 @@
 import { useEffect, useRef, useState } from "react";
 import BackgroundDiv from "./components/BackgroundDiv";
-import TwoDButton from "./components/2DButton";
-import Knob from "./components/Knob";
-import ToggleSlider from "./components/ToggleSlider";
 import { isMobileOnly } from "react-device-detect";
 import { ColorPalette } from "./components/Colors";
 
 import { AudioMain } from "./audio/AudioMain";
-import Visualizer from "./components/Visualizer";
-import { SequencerPreset1 } from "./Presets";
+import { kDefaultPreset } from "./Presets";
 import InstructionOverlay from "./components/InstructionOverlay";
 import SettingsMenu from "./components/SettingsMenu";
 import LowerSettingsPane from "./components/LowerSettingsPane";
+import UpperSettingsPane from "./components/UpperSettingsPane";
+import Sequencer from "./components/Sequencer";
 
 interface props {
   num_steps: number;
-  init_bpm: number;
   audio_main: AudioMain;
 }
 
-const App = ({ num_steps, init_bpm, audio_main }: props) => {
-  // prevent use on mobile platforms
-
+const App = ({ num_steps, audio_main }: props) => {
+  // color palette
   const [palette, setPalette] = useState(0);
+
+  // synth settings
+  const [synth_settings, setSynthSettings] = useState(kDefaultPreset);
+
+  // prevent use on mobile platforms
   if (isMobileOnly) {
     return (
       <div>
@@ -57,120 +58,8 @@ const App = ({ num_steps, init_bpm, audio_main }: props) => {
   });
 
   // states
-  const BPM = useRef(init_bpm);
-
-  const [current_step, setCurrentStep] = useState(0);
-
-  const [running, setRunning] = useState(false);
-  const [recording, setRecording] = useState(false);
-  const [octave, setOctave] = useState(SequencerPreset1.octave);
   const [view_instructions, setViewInstructions] = useState(true);
   const [view_settings_menu, setViewSettingsMenu] = useState(false);
-
-  // update timer to check current step in sequencer
-  useEffect(() => {
-    let request_id = 0;
-    const UpdateStep = () => {
-      // only redraw when necessary
-      if (audio_main.GetCurrentStep() != current_step) {
-        setCurrentStep(audio_main.GetCurrentStep());
-      }
-      request_id = window.requestAnimationFrame(UpdateStep);
-    };
-    UpdateStep();
-
-    return () => {
-      window.cancelAnimationFrame(request_id);
-    };
-  });
-
-  // Should we fill in the machine with a basic preset when the page is opened
-  const use_preset = true;
-
-  // per step parameters
-  audio_main.setOctave(octave ? 2 : 1);
-
-  const vel_init = 0.9;
-  const velocity = useRef(new Array<number>(num_steps).fill(vel_init));
-  if (use_preset) {
-    velocity.current = SequencerPreset1.volume;
-  } else velocity.current = new Array<number>(num_steps).fill(vel_init);
-
-  const decay_init = 0.2;
-  const decay = useRef(new Array<number>(num_steps).fill(decay_init));
-  if (use_preset) {
-    decay.current = SequencerPreset1.decay;
-  } else decay.current = new Array<number>(num_steps).fill(decay_init);
-
-  const pb_init = 0.2;
-  const pitch_bend = useRef(new Array<number>(num_steps).fill(pb_init));
-  if (use_preset) {
-    pitch_bend.current = SequencerPreset1.pitch_bend;
-  } else pitch_bend.current = new Array<number>(num_steps).fill(pb_init);
-
-  const tone_init = 0.1;
-  const tone = useRef(new Array<number>(num_steps).fill(tone_init));
-  if (use_preset) {
-    tone.current = SequencerPreset1.tone;
-  } else tone.current = new Array<number>(num_steps).fill(tone_init);
-
-  const steps = useRef(new Array<boolean>(num_steps).fill(false));
-  if (use_preset) {
-    steps.current = SequencerPreset1.steps;
-  } else steps.current = new Array<boolean>(num_steps).fill(false);
-
-  // initial setting
-  for (let i = 0; i < num_steps; ++i) {
-    audio_main.setVelocity(velocity.current[i], i);
-    audio_main.setDecay(decay.current[i], i);
-    audio_main.setPitchBend(pitch_bend.current[i], i);
-    audio_main.setTone(tone.current[i], i);
-    audio_main.SetTrigger(steps.current[i], i);
-  }
-
-  // Per step setter functions for 2D Button
-  const Toggle = (on: boolean, step_index: number) => {
-    steps.current[step_index] = on;
-    audio_main.SetTrigger(on, step_index);
-  };
-  const xDragPrimary = (x: number, step_index: number) => {
-    decay.current[step_index] = x;
-    audio_main.setDecay(x, step_index);
-  };
-  const yDragPrimary = (y: number, step_index: number) => {
-    velocity.current[step_index] = y;
-    audio_main.setVelocity(y, step_index);
-  };
-  const xDragSecondary = (x: number, step_index: number) => {
-    tone.current[step_index] = x;
-    audio_main.setTone(x, step_index);
-  };
-  const yDragSecondary = (y: number, step_index: number) => {
-    pitch_bend.current[step_index] = y;
-    audio_main.setPitchBend(y, step_index);
-  };
-
-  // Knob Parameters
-  // ring mod
-  const fm_params = useRef({
-    rate_multiplier: SequencerPreset1.fm_mult,
-    range: SequencerPreset1.fm_level,
-  });
-  audio_main.SetGlobalFM(
-    fm_params.current.rate_multiplier,
-    fm_params.current.range
-  );
-
-  // delay
-  const delay_params = useRef({
-    mix: SequencerPreset1.echo_level,
-    fb: SequencerPreset1.echo_fb,
-  });
-  audio_main.setDelayParams(delay_params.current.mix, delay_params.current.fb);
-
-  // High Pass Filter
-  const hpf = useRef(SequencerPreset1.hpf);
-  audio_main.setHPFrequency(hpf.current);
 
   // Prevent display is the window is too narrow
   if (!validDimensions) {
@@ -242,157 +131,22 @@ const App = ({ num_steps, init_bpm, audio_main }: props) => {
                 </button>
               </div>
             </div>
-            <div className="grid grid-cols-8 h-auto gap-x-5 gap-y-10 w-full bg-transparent items-center">
-              <div className="flex flex-col gap-4">
-                <button
-                  className={
-                    "text-xl border h-1/4 w-full font-mono" +
-                    ColorPalette(palette).text_1 +
-                    ColorPalette(palette).knob_border
-                  }
-                  onClick={() => {
-                    audio_main.Run();
-                    setRunning(audio_main.isRunning());
-                  }}
-                  disabled={audio_main.isUsingMidi()}
-                >
-                  {audio_main.isUsingMidi()
-                    ? "EXT MIDI"
-                    : running
-                    ? "Stop"
-                    : "Run"}
-                </button>
-                <button
-                  className={
-                    "text-xl border h-1/4 w-full font-mono" +
-                    ColorPalette(palette).text_1 +
-                    ColorPalette(palette).knob_border
-                  }
-                  onClick={() => {
-                    audio_main.RecordAudio(setRecording);
-                  }}
-                  disabled={recording}
-                >
-                  {recording ? "Recording" : "Record"}
-                </button>
-              </div>
-              <Knob
-                key="1000"
-                init_value={BPM.current}
-                units=""
-                min_value={60}
-                max_value={180}
-                name="Tempo"
-                enabled={!audio_main.isUsingMidi()}
-                use_float={false}
-                onChange={(x: number) => {
-                  BPM.current = x;
-                  audio_main.setBPM(x);
-                }}
-                palette={palette}
-              />
-              <Knob
-                key="1001"
-                init_value={fm_params.current.rate_multiplier}
-                units="X"
-                min_value={0}
-                max_value={10}
-                name="FM Mult"
-                enabled={true}
-                use_float={true}
-                onChange={(x: number) => {
-                  fm_params.current.rate_multiplier = x;
-                  audio_main.SetGlobalFM(x, fm_params.current.range);
-                }}
-                palette={palette}
-              />
-              <Knob
-                key="1002"
-                init_value={fm_params.current.range}
-                units="dB"
-                min_value={-24}
-                max_value={24}
-                name="FM Lvl"
-                enabled={true}
-                use_float={false}
-                onChange={(x: number) => {
-                  fm_params.current.range = x;
-                  audio_main.SetGlobalFM(fm_params.current.rate_multiplier, x);
-                }}
-                palette={palette}
-              />
-              <Knob
-                key="1003"
-                init_value={delay_params.current.mix}
-                units="dB"
-                min_value={-30}
-                max_value={0}
-                name="Echo Lvl"
-                enabled={true}
-                use_float={false}
-                onChange={(x: number) => {
-                  delay_params.current.mix = x;
-                  audio_main.setDelayParams(x, delay_params.current.fb);
-                }}
-                palette={palette}
-              />
-              <Knob
-                key="1004"
-                init_value={delay_params.current.fb}
-                units="dB"
-                min_value={-30}
-                max_value={-3}
-                name="Echo FB"
-                enabled={true}
-                use_float={false}
-                onChange={(x: number) => {
-                  delay_params.current.fb = x;
-                  audio_main.setDelayParams(delay_params.current.mix, x);
-                }}
-                palette={palette}
-              />
-              <Knob
-                key="1005"
-                init_value={hpf.current}
-                units="Hz"
-                min_value={20}
-                max_value={500}
-                name="HPF"
-                enabled={true}
-                use_float={false}
-                onChange={(x: number) => {
-                  hpf.current = x;
-                  audio_main.setHPFrequency(x);
-                }}
-                palette={palette}
-              />
-
-              <Visualizer analyzer={audio_main.GetAnalyzer()} />
-              {steps.current.map((_, i) => {
-                return (
-                  <div key={i}>
-                    <TwoDButton
-                      Toggle={Toggle}
-                      XDragPrimary={xDragPrimary}
-                      YDragPrimary={yDragPrimary}
-                      XDragSecondary={xDragSecondary}
-                      YDragSecondary={yDragSecondary}
-                      step_index={i}
-                      selected_index={current_step}
-                      x_p_init={decay.current[i]}
-                      y_p_init={velocity.current[i]}
-                      x_s_init={tone.current[i]}
-                      y_s_init={pitch_bend.current[i]}
-                      toggle_init={steps.current[i]}
-                      palette={palette}
-                    />
-                  </div>
-                );
-              })}
-            </div>
+            <UpperSettingsPane
+              synth_settings={synth_settings}
+              setSynthSettings={setSynthSettings}
+              audio_main={audio_main}
+              palette={palette}
+            />
+            <Sequencer
+              synth_settings={synth_settings}
+              setSynthSettings={setSynthSettings}
+              audio_main={audio_main}
+              num_steps={num_steps}
+              palette={palette}
+            />
             <LowerSettingsPane
-              octave={octave}
-              setOctave={setOctave}
+              synth_settings={synth_settings}
+              setSynthSettings={setSynthSettings}
               palette_index={palette}
               setPalette={setPalette}
               audio_main={audio_main}
