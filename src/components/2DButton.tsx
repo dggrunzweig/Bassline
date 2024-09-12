@@ -47,12 +47,13 @@ const TwoDButton = (props: props) => {
     }
   );
 
-  const [x, setXP] = useState(props.x_p_init);
-  const [y, setYP] = useState(props.y_p_init);
-  const [x_s, setXS] = useState(props.x_s_init);
-  const [y_s, setYS] = useState(props.y_s_init);
+  const x = props.x_p_init;
+  const y = props.y_p_init;
+  const x_s = props.x_s_init;
+  const y_s = props.y_s_init;
 
-  const [toggled, setToggle] = useState(props.toggle_init);
+  const toggled = props.toggle_init;
+
   const is_dragging = useRef(false);
   const [click_started, setClickStarted] = useState(false);
 
@@ -94,7 +95,6 @@ const TwoDButton = (props: props) => {
 
   const mouseUp = () => {
     if (!is_dragging.current) {
-      setToggle(!toggled);
       props.Toggle(!toggled, props.step_index);
     }
     is_dragging.current = false;
@@ -117,13 +117,9 @@ const TwoDButton = (props: props) => {
       if (primary) {
         props.XDragPrimary(x, props.step_index);
         props.YDragPrimary(y, props.step_index);
-        setXP(x);
-        setYP(y);
       } else {
         props.XDragSecondary(x, props.step_index);
         props.YDragSecondary(y, props.step_index);
-        setXS(x);
-        setYS(y);
       }
     }
   };
@@ -142,13 +138,9 @@ const TwoDButton = (props: props) => {
       if (primary) {
         props.XDragPrimary(x, props.step_index);
         props.YDragPrimary(y, props.step_index);
-        setXP(x);
-        setYP(y);
       } else {
         props.XDragSecondary(x, props.step_index);
         props.YDragSecondary(y, props.step_index);
-        setXS(x);
-        setYS(y);
       }
     }
   };

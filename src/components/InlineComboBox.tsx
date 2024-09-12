@@ -18,11 +18,16 @@ const InlineComboBox = ({
   onSelectItem,
 }: props) => {
   return (
-    <div className="flex flex-col gap-2 pb-2 h-auto items-start font-mono text-sm select-none">
+    <div
+      className={
+        "flex flex-col gap-2 pb-2 h-auto items-start font-mono text-sm select-none" +
+        text_color
+      }
+    >
       {title}
       <div
         className={
-          "flex flex-row items-center justify-between w-64 h-full py-2 border rounded-md" +
+          "flex flex-row items-center justify-between w-64 h-max py-2 border rounded-md" +
           text_color +
           bg_color +
           border_color

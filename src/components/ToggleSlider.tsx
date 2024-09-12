@@ -23,10 +23,9 @@ const ToggleSlider = ({
   text_on,
   onToggle,
 }: props) => {
-  const [on, setOn] = useState(on_init);
+  const on = on_init;
   const [is_dragging, setDrag] = useState(false);
   const setState = (enabled: boolean) => {
-    setOn(enabled);
     onToggle(enabled);
   };
   return (

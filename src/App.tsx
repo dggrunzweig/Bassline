@@ -21,27 +21,45 @@ const App = ({ num_steps, audio_main }: props) => {
   // color palette
   const [palette, setPalette] = useState(0);
 
-  // synth settings
+  // presets
+  let settings = kDefaultPreset;
+  const [synth_settings, setSynthSettings] = useState(settings);
+  const preset_list = useRef(["Default"]);
+  const preset_settings = useRef([kDefaultPreset]);
+  const preset_index = useRef(0);
+
+  // preset cookies
+  const loaded_cookies = useRef(false);
   const [preset_cookie, setPresetCookie] = useCookies([
     "substrata-synth-current-settings",
   ]);
 
-  let settings = kDefaultPreset;
-
-  const preset_list = useRef(["Default"]);
-  const preset_index = useRef(0);
-  if (preset_cookie["substrata-synth-current-settings"]) {
+  if (
+    preset_cookie["substrata-synth-current-settings"] &&
+    !loaded_cookies.current
+  ) {
     settings = preset_cookie["substrata-synth-current-settings"];
-    audio_main.setBPM(settings.bpm);
+    preset_settings.current.push(settings);
     preset_list.current.push("Last Session");
     preset_index.current = 1;
+    setSynthSettings(settings);
+    loaded_cookies.current = true;
   }
 
-  const [synth_settings, setSynthSettings] = useState(settings);
-
   const updateSynthAndCookies = (settings: SynthPreset) => {
-    setSynthSettings(settings);
+    preset_settings.current[1] = settings;
     setPresetCookie("substrata-synth-current-settings", settings);
+    setSynthSettings(settings);
+  };
+
+  const setPreset = (new_preset_index: number) => {
+    const settings = preset_settings.current[new_preset_index];
+    if (settings) {
+      preset_index.current = new_preset_index;
+      // don't overwrite cookies if switching to default preset
+      if (new_preset_index > 0) updateSynthAndCookies(settings);
+      else setSynthSettings(settings);
+    } else console.log("Not A Valid Preset Index");
   };
 
   // prevent use on mobile platforms
@@ -111,8 +129,6 @@ const App = ({ num_steps, audio_main }: props) => {
             palette={palette}
           />
           <SettingsMenu
-            synth_settings={synth_settings}
-            setSynthSettings={updateSynthAndCookies}
             isOpen={view_settings_menu}
             onClose={setViewSettingsMenu}
             palette={palette}
@@ -173,6 +189,9 @@ const App = ({ num_steps, audio_main }: props) => {
               palette_index={palette}
               setPalette={setPalette}
               audio_main={audio_main}
+              presets={preset_list.current}
+              preset_index={preset_index.current}
+              setPreset={setPreset}
             />
           </div>
         </div>

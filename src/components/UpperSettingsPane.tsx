@@ -22,6 +22,9 @@ const UpperSettingsPane = ({
   const [recording, setRecording] = useState(false);
 
   // Knob Parameters
+  // bpm
+  audio_main.setBPM(synth_settings.bpm);
+
   // FM
   audio_main.SetGlobalFM(synth_settings.fm_mult, synth_settings.fm_level);
 

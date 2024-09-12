@@ -24,11 +24,10 @@ const Knob = ({
   enabled = true,
   use_float = false,
 }: props) => {
-  const [current_val, setValue] = useState(init_value);
-
   const rotation = Math.round(
-    ((current_val - min_value) / (max_value - min_value)) * 270 - 135
+    ((init_value - min_value) / (max_value - min_value)) * 270 - 135
   );
+
   const r_tag = "rotate(" + rotation + "deg)";
   const [mouse_clicked, setMouseClicked] = useState(false);
   return (
@@ -62,7 +61,6 @@ const Knob = ({
           }
           if (enabled) {
             onChange(new_val);
-            setValue(new_val);
           }
         }
       }}
@@ -97,7 +95,7 @@ const Knob = ({
           ColorPalette(palette).text_1
         }
       >
-        {enabled ? current_val + units : "Disabled"}
+        {enabled ? init_value + units : "Disabled"}
       </div>
     </div>
   );

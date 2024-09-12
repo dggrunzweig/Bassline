@@ -2,48 +2,20 @@ import { useState } from "react";
 import { ListMidiInputs } from "../audio/midi_utility";
 import InlineComboBox from "./InlineComboBox";
 import { AudioMain } from "../audio/AudioMain";
-import { SynthPreset } from "../Presets";
 interface props {
-  synth_settings: SynthPreset;
-  setSynthSettings: (settings: SynthPreset) => void;
   palette: number;
   onClose: Function;
   isOpen: boolean;
   audio_main: AudioMain;
 }
 
-const SettingsMenu = ({
-  synth_settings,
-  setSynthSettings,
-  palette,
-  isOpen,
-  onClose,
-  audio_main,
-}: props) => {
+const SettingsMenu = ({ palette, isOpen, onClose, audio_main }: props) => {
   let midi_inputs = new Array<string>();
   let midi_access = audio_main.getMidiAccess();
   if (midi_access) midi_inputs = ListMidiInputs(midi_access);
   midi_inputs.unshift("None");
-  audio_main.setRootNote(synth_settings.root_note);
   const [input_index, setInputIndex] = useState(0);
-  const root_notes = [
-    "E",
-    "F",
-    "F#",
-    "G",
-    "G#",
-    "A",
-    "A#",
-    "B",
-    "C",
-    "C#",
-    "D",
-    "D#",
-  ];
-  const init_index = root_notes.indexOf(synth_settings.root_note);
-  const [root_note_index, setRootNodeIndex] = useState(
-    init_index == -1 ? 3 : init_index
-  );
+
   const durations = [4, 8, 12, 16, 24, 32].map((val) => {
     return val.toString();
   });
@@ -96,22 +68,6 @@ const SettingsMenu = ({
           </div>
           <h1 className="text-2xl">Synth Settings</h1>
           <div className="grid grid-flow-col grid-rows-2">
-            <InlineComboBox
-              title="Note"
-              items={root_notes}
-              item_index={root_note_index}
-              onSelectItem={(new_index: number) => {
-                setRootNodeIndex(new_index);
-                audio_main.setRootNote(root_notes[new_index]);
-                setSynthSettings({
-                  ...synth_settings,
-                  root_note: root_notes[new_index],
-                });
-              }}
-              text_color=" text-slate-50 "
-              bg_color=" bg-slate-900 "
-              border_color=" border-slate-50 "
-            />
             <InlineComboBox
               title="Record Duration"
               items={durations}
